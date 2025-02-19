@@ -1,4 +1,4 @@
-<!-- <img src="./khub.png" width="250px"/> -->
+<img src="./khub.png" width="250px"/>
 
 ## Overview and architecture
 
