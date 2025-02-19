@@ -2,7 +2,7 @@
 
 ## Overview and architecture
 
-`khub` was developed to offer a free and open source Kubernetes UI that aims to run in network isolated environments. While `khub` can run from outside the designed cluster, it is designed primarily to run 
+`khub` was developed to offer a free and open source Kubernetes UI that aims to run in network isolated environments. While `khub` can run from outside the designated cluster, it is designed primarily to run 
 in-cluster. Many off the shelf solutions, which often are not free, run their UI from desktop applications, and
 other locations that require a larger than desirable network exposure to internal control planes. 
 
