@@ -1,0 +1,14 @@
+# Use a lightweight Go Alpine image for the final build
+FROM 1.22.0-alpine
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the Go binary
+COPY ./tmp/khub khub
+
+# Expose the port on which the Go binary will listen
+EXPOSE 8080
+
+# # Start the Go binary
+# CMD ["./khub", "start-app"]

@@ -1,0 +1,184 @@
+@use '@carbon/react';
+
+/// Remove overrides once Carbon bugs are fixed upstream.
+/// Need grid option to not add page gutters at large viewports, to also use when nesting grids
+/// @link https://github.com/carbon-design-system/carbon/issues/2792
+@media (min-width: 42rem) {
+  .cds--grid--no-gutter {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/// Padding was introduced in 10.3.0, needs an option to let grid set the viewport gutter
+/// @link https://github.com/carbon-design-system/carbon/issues/3010
+.cds--content {
+  margin-top: 3rem;
+  height: 100%;
+  // padding-bottom: 300px;
+  background: var(--cds-border-subtle-00);
+}
+
+html {
+  height: 100%;
+}
+
+.App {
+  background: var(--cds-border-subtle-00);
+}
+
+body {
+  height: 100%;
+  background: var(--cds-background);
+}
+
+.cds--side-nav__navigation {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--cds-border-subtle);
+}
+
+.pie-column {
+  margin-bottom: 15px !important;
+}
+
+.color-theme-toolbar-actions:focus {
+  outline: none !important;
+}
+
+#root {
+  height: 100%;
+  background: #e8e8e8;
+}
+
+.root-container {
+  min-height: 100vh;
+  background: #e8e8e8;
+}
+
+.root-container-dark {
+  min-height: 100vh;
+  background: var(--cds-border-subtle-00);
+}
+
+.cds--g100 {
+  min-height: 100vh;
+}
+
+.notif-tag {
+  position: absolute;
+  top: 23px;
+  left: 24px;
+  height: 12px;
+  width: 12px;
+  border-radius: 100%;
+  background-color: green;
+}
+
+.notif-tag:hover {
+  cursor: pointer;
+}
+
+.theader {
+  background: var(--cds-background) !important;
+}
+
+.cds--tooltip-content {
+  max-height: 26px !important;
+  max-width: 67px;
+  font-size: 12px;
+  padding: 6px !important;
+  font-weight: var(--cds-body-01-font-weight, 400);
+  line-height: var(--cds-body-01-line-height, 1.42857);
+  letter-spacing: var(--cds-body-01-letter-spacing, 0.16px);
+  color: var(--cds-text-inverse, #ffffff);
+  max-inline-size: 18rem;
+}
+
+.recharts-sector {
+  stroke: none;
+}
+
+.legendFilterLink:hover {
+  cursor: pointer;
+  filter: brightness(150%);
+}
+
+.cds--overflow-menu-options__option {
+  outline: none !important;
+}
+.cds--overflow-menu-options__option:focus-visible {
+  outline: none !important;
+}
+.cds--overflow-menu-options__option:focus {
+  outline: none !important;
+}
+.cds--overflow-menu-options__btn:focus {
+  outline: none !important;
+}
+
+.custom-edge {
+  stroke: var(--cds-layer);
+}
+
+.custom-edge-pointer {
+  opacity: 0.6;
+}
+
+.accordian-border-0 {
+  border-top: 1px solid var(--cds-border-strong) !important;
+  border-bottom: 1px solid var(--cds-border-strong) !important;
+}
+
+.accordian-border {
+  border-bottom: 1px solid var(--cds-border-strong) !important;
+  padding-inline-end: 0% !important;
+}
+
+.accordian-content-override {
+  padding-inline-end: 0% !important;
+}
+
+.accordian-title {
+  margin-top: 18px;
+  margin-left: 10px;
+}
+
+.accordian-subtitle {
+  margin-right: 50px;
+  margin-bottom: 30px;
+  float: right;
+}
+
+.cds--data-table-content {
+  overflow: auto;
+  max-height: 800px;
+  min-height: 800px;
+  background-color: var(--cds-background, #fafafa);
+}
+
+#infoDrawerTable > .cds--data-table-content{
+  overflow: auto !important;
+  max-height: 800px !important;
+  min-height: 0px !important;
+  background-color: var(--cds-background, #fafafa) !important;
+}
+
+.events-table > .cds--data-table-content {
+  overflow: auto;
+  max-height: 500px;
+}
+
+.cds--data-table thead {
+  position: sticky;
+  top: 0;
+  font-size: var(--cds-heading-compact-01-font-size, 0.875rem);
+  font-weight: var(--cds-heading-compact-01-font-weight, 600);
+  line-height: var(--cds-heading-compact-01-line-height, 1.28572);
+  letter-spacing: var(--cds-heading-compact-01-letter-spacing, 0.16px);
+  background-color: var(--cds-layer-accent);
+}
+
+.cds--accordion__content{
+  padding-inline-end: 5% !important;
+}

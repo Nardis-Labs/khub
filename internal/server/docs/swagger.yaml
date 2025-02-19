@@ -1,0 +1,224 @@
+info:
+  contact: {}
+paths:
+  /api/k8s/clusterevents:
+    get:
+      consumes:
+      - application/json
+      description: get cluster events information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get cluster events via WebSocket
+      tags:
+      - K8s
+  /api/k8s/cronjobs:
+    get:
+      consumes:
+      - application/json
+      description: get cronjobs' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get cronjobs via WebSocket
+      tags:
+      - K8s
+  /api/k8s/daemonsets:
+    get:
+      consumes:
+      - application/json
+      description: get daemonsets' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get daemonsets via WebSocket
+      tags:
+      - K8s
+  /api/k8s/deployments:
+    get:
+      consumes:
+      - application/json
+      description: get deployments' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get deployments via WebSocket
+      tags:
+      - K8s
+  /api/k8s/jobs:
+    get:
+      consumes:
+      - application/json
+      description: get jobs' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get jobs via WebSocket
+      tags:
+      - K8s
+  /api/k8s/name:
+    get:
+      consumes:
+      - application/json
+      description: get cluster name
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get K8s Cluster Name Context
+      tags:
+      - K8s
+  /api/k8s/pods:
+    get:
+      consumes:
+      - application/json
+      description: get pods' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get Pods via WebSocket
+      tags:
+      - K8s
+  /api/k8s/replicasets:
+    get:
+      consumes:
+      - application/json
+      description: get daemonsets' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get daemonsets via WebSocket
+      tags:
+      - K8s
+  /api/k8s/resourcetree:
+    get:
+      consumes:
+      - application/json
+      description: get cluster resource tree information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get cluster resource tree via WebSocket
+      tags:
+      - K8s
+  /api/k8s/statefulsets:
+    get:
+      consumes:
+      - application/json
+      description: get statefulsets' information via WebSocket
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Get statefulsets via WebSocket
+      tags:
+      - K8s
+  /api/k8s/wscheck:
+    get:
+      consumes:
+      - application/json
+      description: ws initial connection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      summary: Establish a connection before websocket upgrade
+      tags:
+      - K8s
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: get Users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get Users
+      tags:
+      - Users
+swagger: "2.0"

@@ -1,0 +1,209 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: khub
+rules:
+- apiGroups: ["*"]
+  resources: [
+    "pods", 
+    "services", 
+    "deployments", 
+    "daemonsets", 
+    "endpoints", 
+    "statefulsets",
+    "persistentvolumeclaims", 
+    "events", 
+    "configmaps", 
+    "ingresses",
+    "cronjobs",
+    "replicasets",
+    "jobs",
+    "events",
+    "pods/exec",
+    "deployments/scale",
+    "nodes"
+  ]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: khub-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: khub
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+
+---
+
+# deploy the khub data sync server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: khub-data-sync
+  labels:
+    app: khub-data-sync
+    app.kubernetes.io/name: khub
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: khub-data-sync
+  template:
+    metadata:
+      labels:
+        app: khub-data-sync
+        app.kubernetes.io/name: khub
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: sidecarexample
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+        - >
+          while true;
+          do
+            # every second
+            echo hello
+            sleep 1;
+          done
+      - name: khub
+        image: localhost/khublocal:0.0.1
+        command: ["/app/khub", "start-datasink"]
+        env:
+          - name: khub_REDIS_ADDRESS
+            value: "redis-master.redis:6379"
+          - name: khub_K8S_TREE_MAP_LABEL_SELECTOR
+            value: "app.kubernetes.io/name,k8s-app"
+---
+
+# deploy the khub app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: khub-app
+  labels:
+    app: khub-app
+    app.kubernetes.io/name: khub
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: khub-app
+  template:
+    metadata:
+      labels:
+        app: khub-app
+        app.kubernetes.io/name: khub
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: khub
+        image: localhost/khublocal:0.0.1
+        command: ["/app/khub", "start-app"]
+        env:
+          - name: khub_REDIS_ADDRESS
+            value: "redis-master.redis:6379"
+          - name: khub_K8S_TREE_MAP_LABEL_SELECTOR
+            value: "app.kubernetes.io/name,k8s-app"
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              configMapKeyRef:
+                name: awscreds
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: awscreds
+                key: AWS_SECRET_ACCESS_KEY
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: khub-app
+  labels:
+    app: khub-app
+    app.kubernetes.io/name: khub
+spec:
+  selector:
+    app: khub-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: khub-app
+  labels:
+    app: khub-app
+    app.kubernetes.io/name: khub
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: khub.dev.smar.cloud
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: khub-app
+            port:
+              number: 8080
+
+---
+
+# apiVersion: batch/v1
+# kind: CronJob
+# metadata:
+#   name: khub-mysql-repl-topology
+#   labels:
+#     app: khub-mysql-repl-topology
+#     app.kubernetes.io/name: khub
+# spec:
+#   successfulJobsHistoryLimit: 1
+#   failedJobsHistoryLimit: 2
+#   schedule: "* * * * *"
+#   jobTemplate:
+#     spec:
+#       template:
+#         spec:
+#           containers:
+#           - name: khub
+#             image: localhost/khublocal:0.0.1
+#             imagePullPolicy: IfNotPresent
+#             command: ["/app/khub", "capture-replication-topology"]
+#             env:
+#               - name: khub_REDIS_ADDRESS
+#                 value: "redis-master.redis:6379"
+#           restartPolicy: Never
+
+# --- 
+
+apiVersion: v1
+data:
+  fun.conf: |
+    this is a buncha random cm data... have fun
+  more-fun.conf: |
+    this is a buncha random cm data... have more fun
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: khub
+  name: khub-default-httpd--etc-httpd-conf-httpd-conf
+  namespace: default

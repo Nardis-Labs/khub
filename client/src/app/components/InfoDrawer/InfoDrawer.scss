@@ -1,0 +1,33 @@
+.InfoDrawer {
+  .InfoDrawer__checkbox {
+      display: none;
+
+      &:checked {
+          & ~ .InfoDrawer__overlay {
+              display: block;
+              opacity: 1;
+          }
+
+          & ~ .InfoDrawer__container {
+              visibility: visible;
+              transform: translate3d(0, 0, 0) !important;
+          }
+      }
+  }
+
+  .InfoDrawer__overlay {
+      display: none;
+      height: 100vh;
+      left: 0;
+      position: fixed;
+      top: 0;
+      width: 100%;
+  }
+
+  .InfoDrawer__container {
+      position: fixed;
+      visibility: hidden;
+      transition: all;
+      box-shadow: 0 0 10px 5px rgba($color: #000000, $alpha: 0.1);
+  }
+}

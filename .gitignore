@@ -1,0 +1,7 @@
+tmp
+/.idea/
+postgres-vol
+cover.out
+local-secret.env
+.terraform
+khublocal.tar

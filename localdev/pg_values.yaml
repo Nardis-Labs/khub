@@ -1,0 +1,7 @@
+primary:
+  initdb:
+    user: postgres
+    password: postgres1011
+    scripts:
+      initdb.sql: |
+        CREATE DATABASE khub;
