@@ -32,12 +32,12 @@ type Config struct {
 	AuthSessionHandlerKey string `json:"-" mapstructure:"auth_session_handler_key"`
 
 	// Auth settings
-	AuthIDP          string `json:"-" mapstructure:"auth_idp"`
-	OIDCIssuer       string `json:"-" mapstructure:"oidc_issuer"`
-	OIDCRedirectURI  string `json:"-" mapstructure:"oidc_redirect_uri"`
-	OIDCClientID     string `json:"-" mapstructure:"oidc_client_id"`
-	OIDCClientSecret string `json:"-" mapstructure:"oidc_client_secret"`
-	OIDCAudience     string `json:"-" mapstructure:"oidc_audience"`
+	AuthIDP             string `json:"-" mapstructure:"auth_idp"`
+	OIDCIssuer          string `json:"-" mapstructure:"oidc_issuer"`
+	OIDCRedirectURI     string `json:"-" mapstructure:"oidc_redirect_uri"`
+	OIDCClientID        string `json:"-" mapstructure:"oidc_client_id"`
+	OIDCCLientTLSVerify bool   `json:"-" mapstructure:"oidc_client_tls_verify"`
+	OIDCAudience        string `json:"-" mapstructure:"oidc_audience"`
 
 	// Kubernetes settings
 	K8sInCluster               bool `json:"-" mapstructure:"k8s_in_cluster"`
@@ -61,13 +61,13 @@ func Load(version string, cfgFile string) *Config {
 		Timeout:                    2000,
 		BaseURL:                    "http://localhost:3000",
 		AuthSessionHandlerKey:      "auth-session",
-		OIDCIssuer:                 "{REPLACE ME}",
+		OIDCIssuer:                 "{REPLACE_ME}",
 		OIDCRedirectURI:            "http://localhost:8080/authorization-code/callback",
-		OIDCClientID:               "{REPLACE ME}",
-		OIDCClientSecret:           "{REPLACE ME}",
-		OIDCAudience:               "{REPLACE ME}",
+		OIDCClientID:               "{REPLACE_ME}",
+		OIDCCLientTLSVerify:        false, // Zitadel cloud's self-signed cert is not trusted by default, for example
+		OIDCAudience:               "{REPLACE_ME}",
 		K8sInCluster:               true,
-		RedisAddress:               "redis.redis:6379",
+		RedisAddress:               "redis-master.redis:6379",
 		DBUserName:                 "postgres",
 		DBPassword:                 "postgres1011",
 		DBHost:                     "postgres-postgresql.default.svc.cluster.local",
@@ -96,7 +96,7 @@ func Load(version string, cfgFile string) *Config {
 	_ = viper.BindEnv("OIDC_ISSUER")
 	_ = viper.BindEnv("OIDC_REDIRECT_URI")
 	_ = viper.BindEnv("OIDC_CLIENT_ID")
-	_ = viper.BindEnv("OIDC_CLIENT_SECRET")
+	_ = viper.BindEnv("OIDC_CLIENT_TLS_VERIFY")
 	_ = viper.BindEnv("OIDC_AUDIENCE")
 	_ = viper.BindEnv("REDIS_ADDRESS")
 	_ = viper.BindEnv("DB_USERNAME")
