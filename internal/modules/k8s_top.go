@@ -45,7 +45,7 @@ func (sdk *K8sSDK) topNode() ([]metricsapi.NodeMetrics, error) {
 	metricsAPIAvailable := supportedMetricsAPIVersionAvailable(apiGroups)
 
 	if !metricsAPIAvailable {
-		return nil, errors.New("Metrics API not available")
+		return nil, errors.New("metrics API not available")
 	}
 
 	metrics, err := getNodeMetricsFromMetricsAPI(sdk.metricsClient, selector)
