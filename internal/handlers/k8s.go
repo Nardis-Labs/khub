@@ -360,31 +360,46 @@ func (c K8sSessionHandler) RolloutRestart(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, fmt.Sprintf("successfully initiated restart for %s: %s", resourceInfo.Kind, resourceInfo.Name))
 }
 
-// TakeTomcatThreadDump godoc
-// @Summary Executes a tomcat thread dump on a specific pod
-// @Description Executes a tomcat thread dump on a specific pod
+// RunPodExecPlugin godoc
+// @Summary Executes a pod exec plugin on a specific pod
+// @Description Executes a pod exec plugin on a specific pod
 // @Tags K8s
 // @Accept  json
 // @Produce  json
-// @Success 200 {string} string "Successfully initiated thread dump"
+// @Success 200 {string} string "Successfully initiated pod exec plugin"
 // @Failure 400 {object} string "Bad Request"
-// @Failure 500 {object} string "unable to take tomcat thread dump"
-// @Router /api/k8s/threaddump [post]
-func (c K8sSessionHandler) TakeTomcatThreadDump(ctx echo.Context) error {
+// @Failure 403 {object} string "Forbidden"
+// @Failure 500 {object} string "unable to run pod exec plugin"
+// @Router /api/k8s/execplugin [post]
+func (c K8sSessionHandler) RunPodExecPlugin(ctx echo.Context) error {
 	resourceInfoData, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("unable to read resource info from json body for thread dump request %s", err.Error()))
+		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("unable to read resource info from json body for pod exec plugin request %s", err.Error()))
 	}
 	resourceInfo := types.ResourceInfo{}
 
 	err = json.Unmarshal(resourceInfoData, &resourceInfo)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("unable to unmarshal resource info from json body for thread dump request %s", err.Error()))
+		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("unable to unmarshal resource info from json body for pod exec plugin request %s", err.Error()))
 	}
 
-	stdout, stderr, err := c.provider.K8sProvider.TakeTomcatThreadDump(resourceInfo.Namespace, resourceInfo.Name)
+	sess, err := session.Get("user-permissions", ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("unable to take tomcat thread dump: %v", err))
+		return ctx.JSON(http.StatusForbidden, fmt.Sprintf("forbidden. Unable to get auth info: %s", err.Error()))
+	}
+
+	userPermissions := []string{}
+	if sess.Values["permissions"] != nil {
+		userPermissions = sess.Values["permissions"].([]string)
+	}
+
+	if !c.hasWritePermissions(userPermissions, resourceInfo.Labels) {
+		return ctx.JSON(http.StatusForbidden, "forbidden. You do not have write permissions for this resource")
+	}
+
+	stdout, stderr, err := c.provider.K8sProvider.ExecutePodExecPlugin(resourceInfo.Namespace, resourceInfo.Name, resourceInfo.Plugin)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("unable to run pod exec plugin: %v", err))
 	}
 	outStr := fmt.Sprintf("stdout: %s\nstderr: %s", stdout, stderr)
 	return ctx.JSON(http.StatusOK, outStr)
