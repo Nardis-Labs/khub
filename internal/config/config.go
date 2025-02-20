@@ -96,7 +96,7 @@ func Load(version string, cfgFile string) *Config {
 	_ = viper.BindEnv("OIDC_ISSUER")
 	_ = viper.BindEnv("OIDC_REDIRECT_URI")
 	_ = viper.BindEnv("OIDC_CLIENT_ID")
-	_ = viper.BindEnv("OIDC_CLIENT_SECRET")
+	_ = viper.BindEnv("OIDC_CLIENT_TLS_VERIFY")
 	_ = viper.BindEnv("OIDC_AUDIENCE")
 	_ = viper.BindEnv("REDIS_ADDRESS")
 	_ = viper.BindEnv("DB_USERNAME")
