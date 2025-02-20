@@ -63,17 +63,6 @@ spec:
     spec:
       serviceAccountName: default
       containers:
-      - name: sidecarexample
-        image: busybox
-        command: ["/bin/sh", "-c"]
-        args:
-        - >
-          while true;
-          do
-            # every second
-            echo hello
-            sleep 1;
-          done
       - name: khub
         image: localhost/khublocal:0.0.1
         command: ["/app/khub", "start-datasink"]
