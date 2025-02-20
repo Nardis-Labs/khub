@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/sullivtr/k8s_platform/internal/modules"
+	"github.com/sullivtr/k8s_platform/internal/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -144,6 +145,6 @@ func (p *K8sApiProvider) RolloutRestartStatefulSet(namespace, name string) error
 	return p.Session.SDK.RolloutRestartStatefulSet(context.Background(), name, namespace)
 }
 
-func (p *K8sApiProvider) TakeTomcatThreadDump(namespace, podName string) (string, string, error) {
-	return p.Session.SDK.TakeTomcatThreadDump(namespace, podName)
+func (p *K8sApiProvider) ExecutePodExecPlugin(namespace, podName string, plugin types.K8sPodExecPlugin) (string, string, error) {
+	return p.Session.SDK.ExecutePodExecPlugin(namespace, podName, plugin)
 }

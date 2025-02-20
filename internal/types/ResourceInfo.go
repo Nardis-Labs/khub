@@ -5,4 +5,5 @@ type ResourceInfo struct {
 	Name      string            `json:"name"`
 	Namespace string            `json:"namespace"`
 	Labels    map[string]string `json:"labels"`
+	Plugin    K8sPodExecPlugin  `json:"plugin"`
 }

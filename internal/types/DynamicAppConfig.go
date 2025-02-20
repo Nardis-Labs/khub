@@ -8,11 +8,19 @@ import (
 
 // DynamicConfigJSONB is a custom type for JSONB fields in the database
 type DynamicConfigJSONB struct {
-	DefaultReplicaScaleLimit int            `json:"defaultReplicaScaleLimit"`
-	ReplicaScaleLimits       map[string]int `json:"replicaScaleLimits"`
-	EnableK8sGlobalReadOnly  bool           `json:"enableK8sGlobalReadOnly"`
-	K8sClusterName           string         `json:"k8sClusterName"`
-	K8sClusterNamespaces     []string       `json:"k8sClusterNamespaces"`
+	DefaultReplicaScaleLimit int                `json:"defaultReplicaScaleLimit"`
+	ReplicaScaleLimits       map[string]int     `json:"replicaScaleLimits"`
+	EnableK8sGlobalReadOnly  bool               `json:"enableK8sGlobalReadOnly"`
+	K8sClusterName           string             `json:"k8sClusterName"`
+	K8sClusterNamespaces     []string           `json:"k8sClusterNamespaces"`
+	K8sPodExecPlugins        []K8sPodExecPlugin `json:"k8sPodExecPlugins"`
+}
+
+type K8sPodExecPlugin struct {
+	Enabled     bool   `json:"enabled"`
+	Command     string `json:"command"`
+	Container   string `json:"container"`
+	LabelFilter string `json:"labelFilter"`
 }
 
 // Value Marshal
