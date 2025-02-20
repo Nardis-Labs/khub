@@ -32,12 +32,12 @@ type Config struct {
 	AuthSessionHandlerKey string `json:"-" mapstructure:"auth_session_handler_key"`
 
 	// Auth settings
-	AuthIDP          string `json:"-" mapstructure:"auth_idp"`
-	OIDCIssuer       string `json:"-" mapstructure:"oidc_issuer"`
-	OIDCRedirectURI  string `json:"-" mapstructure:"oidc_redirect_uri"`
-	OIDCClientID     string `json:"-" mapstructure:"oidc_client_id"`
-	OIDCClientSecret string `json:"-" mapstructure:"oidc_client_secret"`
-	OIDCAudience     string `json:"-" mapstructure:"oidc_audience"`
+	AuthIDP             string `json:"-" mapstructure:"auth_idp"`
+	OIDCIssuer          string `json:"-" mapstructure:"oidc_issuer"`
+	OIDCRedirectURI     string `json:"-" mapstructure:"oidc_redirect_uri"`
+	OIDCClientID        string `json:"-" mapstructure:"oidc_client_id"`
+	OIDCCLientTLSVerify bool   `json:"-" mapstructure:"oidc_client_tls_verify"`
+	OIDCAudience        string `json:"-" mapstructure:"oidc_audience"`
 
 	// Kubernetes settings
 	K8sInCluster               bool `json:"-" mapstructure:"k8s_in_cluster"`
@@ -61,11 +61,11 @@ func Load(version string, cfgFile string) *Config {
 		Timeout:                    2000,
 		BaseURL:                    "http://localhost:3000",
 		AuthSessionHandlerKey:      "auth-session",
-		OIDCIssuer:                 "https://h8ds-local-ajkcac.us1.zitadel.cloud/",
+		OIDCIssuer:                 "{REPLACE_ME}",
 		OIDCRedirectURI:            "http://localhost:8080/authorization-code/callback",
-		OIDCClientID:               "307997257414820469",
-		OIDCClientSecret:           "nR48c0QmsDkf8rotWJxSNV7HGSWQiUwsYJC3NBnyWtjOemjjcHTwMhfAxkwVveF2",
-		OIDCAudience:               "307997257414820469",
+		OIDCClientID:               "{REPLACE_ME}",
+		OIDCCLientTLSVerify:        false, // Zitadel cloud's self-signed cert is not trusted by default, for example
+		OIDCAudience:               "{REPLACE_ME}",
 		K8sInCluster:               true,
 		RedisAddress:               "redis-master.redis:6379",
 		DBUserName:                 "postgres",

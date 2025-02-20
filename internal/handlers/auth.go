@@ -18,7 +18,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 
-	// "github.com/microcosm-cc/bluemonday"
 	"github.com/rs/zerolog/log"
 	"github.com/sullivtr/k8s_platform/internal/providers"
 	"github.com/sullivtr/k8s_platform/internal/types"
@@ -80,24 +79,24 @@ func (c *AuthSessionHandler) Login(ctx echo.Context) error {
 	sess.Values["code_verifier"] = codeVerifier
 	codeChallenge := createCodeChallenge(codeVerifier)
 	sess.Values["code_challenge"] = codeChallenge
+	if err := sess.Save(ctx.Request(), ctx.Response()); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
 
 	oAuthClient := &oauthClient{
-		ClientID:        c.provider.Config.OIDCClientID,
-		IDP:             c.provider.Config.AuthIDP,
-		Client:          &http.Client{},
-		IssuerURL:       c.provider.Config.OIDCIssuer,
-		OIDCRedirectURI: c.provider.Config.OIDCRedirectURI,
-		State:           state,
-		CodeChallenge:   codeChallenge,
+		ClientID:            c.provider.Config.OIDCClientID,
+		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
+		IDP:                 c.provider.Config.AuthIDP,
+		Client:              &http.Client{},
+		IssuerURL:           c.provider.Config.OIDCIssuer,
+		OIDCRedirectURI:     c.provider.Config.OIDCRedirectURI,
+		State:               state,
+		CodeChallenge:       codeChallenge,
 	}
 
 	authorizationEndpoint, _, _, err := oAuthClient.getDiscoveryEndpoints()
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during OIDC discovery: %s", err.Error()))
-	}
-
-	if err := sess.Save(ctx.Request(), ctx.Response()); err != nil {
-		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	redirectPath := oAuthClient.getAuthorizeRedirect(ctx.Request(), authorizationEndpoint)
@@ -161,14 +160,14 @@ func (c *AuthSessionHandler) AuthCodeCallback(ctx echo.Context) error {
 	}
 
 	oAuthClient := &oauthClient{
-		ClientID:        c.provider.Config.OIDCClientID,
-		ClientSecret:    c.provider.Config.OIDCClientSecret,
-		IDP:             c.provider.Config.AuthIDP,
-		Client:          &http.Client{},
-		IssuerURL:       c.provider.Config.OIDCIssuer,
-		OIDCRedirectURI: c.provider.Config.OIDCRedirectURI,
-		CodeVerifier:    codeVerifier,
-		AuthCode:        ctx.Request().URL.Query().Get("code"),
+		ClientID:            c.provider.Config.OIDCClientID,
+		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
+		IDP:                 c.provider.Config.AuthIDP,
+		Client:              &http.Client{},
+		IssuerURL:           c.provider.Config.OIDCIssuer,
+		OIDCRedirectURI:     c.provider.Config.OIDCRedirectURI,
+		CodeVerifier:        codeVerifier,
+		AuthCode:            ctx.Request().URL.Query().Get("code"),
 	}
 
 	_, tokenEndpoint, userInfoEndpoint, err := oAuthClient.getDiscoveryEndpoints()
@@ -185,7 +184,7 @@ func (c *AuthSessionHandler) AuthCodeCallback(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during auth code exchange: %s, %s", exchange.Error, exchange.ErrorDescription))
 	}
 
-	email, err := getUserEmailFromIDP(exchange.AccessToken, userInfoEndpoint)
+	email, err := oAuthClient.getUserEmailFromIDP(exchange.AccessToken, userInfoEndpoint)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during user info retrieval: %s", err.Error()))
 	}
@@ -297,16 +296,17 @@ func randomVerifyerBytes(length int) ([]byte, error) {
 }
 
 type oauthClient struct {
-	Client          *http.Client
-	IssuerURL       string
-	IDP             string
-	ClientID        string
-	ClientSecret    string
-	OIDCRedirectURI string
-	State           string
-	CodeChallenge   string
-	CodeVerifier    string
-	AuthCode        string
+	Client              *http.Client
+	IssuerURL           string
+	IDP                 string
+	ClientID            string
+	ClientSecret        string
+	OIDCRedirectURI     string
+	State               string
+	CodeChallenge       string
+	CodeVerifier        string
+	AuthCode            string
+	OIDCCLientTLSVerify bool
 }
 
 func (c *oauthClient) getAuthorizeRedirect(r *http.Request, authorizationEndpoint string) string {
@@ -315,7 +315,6 @@ func (c *oauthClient) getAuthorizeRedirect(r *http.Request, authorizationEndpoin
 	q := r.URL.Query()
 	q.Add("client_id", c.ClientID)
 	q.Add("response_type", "code")
-	// q.Add("response_mode", "query")
 	q.Add("scope", "openid profile email")
 	q.Add("redirect_uri", c.OIDCRedirectURI)
 	q.Add("state", c.State)
@@ -333,7 +332,7 @@ func (c *oauthClient) exchangeAuthCodeForToken(tokenEndpoint string) (types.Exch
 
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
 		},
 	}
 	req := c.constructOauth2TokenRequest(tokenEndpoint)
@@ -361,7 +360,6 @@ func (c *oauthClient) constructOauth2TokenRequest(tokenEndpoint string) *http.Re
 	reqBody.Set("code", c.AuthCode)
 	reqBody.Set("redirect_uri", c.OIDCRedirectURI)
 	reqBody.Set("client_id", c.ClientID)
-	// reqBody.Set("client_secret", c.ClientSecret)
 	reqBody.Set("code_verifier", c.CodeVerifier)
 
 	req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody.Encode()))
@@ -374,7 +372,7 @@ func (c *oauthClient) constructOauth2TokenRequest(tokenEndpoint string) *http.Re
 func (c *oauthClient) getDiscoveryEndpoints() (string, string, string, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
 		},
 	}
 	req, err := http.NewRequest("GET", c.IssuerURL+".well-known/openid-configuration", nil)
@@ -398,10 +396,10 @@ func (c *oauthClient) getDiscoveryEndpoints() (string, string, string, error) {
 	return respData["authorization_endpoint"].(string), respData["token_endpoint"].(string), respData["userinfo_endpoint"].(string), nil
 }
 
-func getUserEmailFromIDP(accessToken, userInfoEndpoint string) (string, error) {
+func (c *oauthClient) getUserEmailFromIDP(accessToken, userInfoEndpoint string) (string, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
 		},
 	}
 	req, err := http.NewRequest("GET", userInfoEndpoint, nil)
