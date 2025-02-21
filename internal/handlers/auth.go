@@ -3,9 +3,11 @@ package handlers
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+
 	"github.com/rs/zerolog/log"
 	"github.com/sullivtr/k8s_platform/internal/providers"
 	"github.com/sullivtr/k8s_platform/internal/types"
@@ -81,16 +84,22 @@ func (c *AuthSessionHandler) Login(ctx echo.Context) error {
 	}
 
 	oAuthClient := &oauthClient{
-		ClientID:        c.provider.Config.OIDCClientID,
-		IDP:             c.provider.Config.AuthIDP,
-		Client:          &http.Client{},
-		IssuerURL:       c.provider.Config.OIDCIssuer,
-		OIDCRedirectURI: c.provider.Config.OIDCRedirectURI,
-		State:           state,
-		CodeChallenge:   codeChallenge,
+		ClientID:            c.provider.Config.OIDCClientID,
+		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
+		IDP:                 c.provider.Config.AuthIDP,
+		Client:              &http.Client{},
+		IssuerURL:           c.provider.Config.OIDCIssuer,
+		OIDCRedirectURI:     c.provider.Config.OIDCRedirectURI,
+		State:               state,
+		CodeChallenge:       codeChallenge,
 	}
 
-	redirectPath := oAuthClient.getAuthorizeRedirect(ctx.Request())
+	authorizationEndpoint, _, _, err := oAuthClient.getDiscoveryEndpoints()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during OIDC discovery: %s", err.Error()))
+	}
+
+	redirectPath := oAuthClient.getAuthorizeRedirect(ctx.Request(), authorizationEndpoint)
 
 	// Make sure the session state can be read and is available
 	sessionState, ok := sess.Values["state"].(string)
@@ -151,17 +160,22 @@ func (c *AuthSessionHandler) AuthCodeCallback(ctx echo.Context) error {
 	}
 
 	oAuthClient := &oauthClient{
-		ClientID:        c.provider.Config.OIDCClientID,
-		ClientSecret:    c.provider.Config.OIDCClientSecret,
-		IDP:             c.provider.Config.AuthIDP,
-		Client:          &http.Client{},
-		IssuerURL:       c.provider.Config.OIDCIssuer,
-		OIDCRedirectURI: c.provider.Config.OIDCRedirectURI,
-		CodeVerifier:    codeVerifier,
-		AuthCode:        ctx.Request().URL.Query().Get("code"),
+		ClientID:            c.provider.Config.OIDCClientID,
+		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
+		IDP:                 c.provider.Config.AuthIDP,
+		Client:              &http.Client{},
+		IssuerURL:           c.provider.Config.OIDCIssuer,
+		OIDCRedirectURI:     c.provider.Config.OIDCRedirectURI,
+		CodeVerifier:        codeVerifier,
+		AuthCode:            ctx.Request().URL.Query().Get("code"),
 	}
 
-	exchange, err := oAuthClient.exchangeAuthCodeForToken()
+	_, tokenEndpoint, userInfoEndpoint, err := oAuthClient.getDiscoveryEndpoints()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during OIDC discovery: %s", err.Error()))
+	}
+
+	exchange, err := oAuthClient.exchangeAuthCodeForToken(tokenEndpoint)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during auth code exchange: %s", err.Error()))
 	}
@@ -170,8 +184,18 @@ func (c *AuthSessionHandler) AuthCodeCallback(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during auth code exchange: %s, %s", exchange.Error, exchange.ErrorDescription))
 	}
 
+	email, err := oAuthClient.getUserEmailFromIDP(exchange.AccessToken, userInfoEndpoint)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("failure during user info retrieval: %s", err.Error()))
+	}
+
+	if email == "" {
+		return ctx.JSON(http.StatusInternalServerError, "no email found in user info response")
+	}
+
 	sess.Values["id_token"] = exchange.IdToken
 	sess.Values["access_token"] = exchange.AccessToken
+	sess.Values["preferred_username"] = email
 	if err := sess.Save(ctx.Request(), ctx.Response()); err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -272,48 +296,50 @@ func randomVerifyerBytes(length int) ([]byte, error) {
 }
 
 type oauthClient struct {
-	Client          *http.Client
-	IssuerURL       string
-	IDP             string
-	ClientID        string
-	ClientSecret    string
-	OIDCRedirectURI string
-	State           string
-	CodeChallenge   string
-	CodeVerifier    string
-	AuthCode        string
+	Client              *http.Client
+	IssuerURL           string
+	IDP                 string
+	ClientID            string
+	ClientSecret        string
+	OIDCRedirectURI     string
+	State               string
+	CodeChallenge       string
+	CodeVerifier        string
+	AuthCode            string
+	OIDCCLientTLSVerify bool
 }
 
-func (c *oauthClient) getAuthorizeRedirect(r *http.Request) string {
+func (c *oauthClient) getAuthorizeRedirect(r *http.Request, authorizationEndpoint string) string {
 	var redirectPath string
 
 	q := r.URL.Query()
 	q.Add("client_id", c.ClientID)
 	q.Add("response_type", "code")
-	q.Add("response_mode", "query")
 	q.Add("scope", "openid profile email")
 	q.Add("redirect_uri", c.OIDCRedirectURI)
 	q.Add("state", c.State)
 	q.Add("code_challenge_method", "S256")
 	q.Add("code_challenge", c.CodeChallenge)
 
-	issuerPath := "/oauth2/v2.0/authorize"
-
-	redirectPath = fmt.Sprintf("%s%s?%s", c.IssuerURL, issuerPath, q.Encode())
+	redirectPath = fmt.Sprintf("%s?%s", authorizationEndpoint, q.Encode())
 	return redirectPath
 }
 
-func (c *oauthClient) exchangeAuthCodeForToken() (types.Exchange, error) {
+func (c *oauthClient) exchangeAuthCodeForToken(tokenEndpoint string) (types.Exchange, error) {
 	if c.AuthCode == "" {
 		return types.Exchange{}, fmt.Errorf("no auth code present")
 	}
 
-	req := c.constructOauth2TokenRequest()
-
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
+		},
+	}
+	req := c.constructOauth2TokenRequest(tokenEndpoint)
 	h := req.Header
 	h.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := c.Client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return types.Exchange{}, fmt.Errorf("failed to exchange code for tokens: %v", err)
 	}
@@ -328,17 +354,74 @@ func (c *oauthClient) exchangeAuthCodeForToken() (types.Exchange, error) {
 	return exchange, nil
 }
 
-func (c *oauthClient) constructOauth2TokenRequest() *http.Request {
+func (c *oauthClient) constructOauth2TokenRequest(tokenEndpoint string) *http.Request {
 	reqBody := url.Values{}
-	reqBody.Set("client_id", c.ClientID)
-	reqBody.Set("client_secret", c.ClientSecret)
 	reqBody.Set("grant_type", "authorization_code")
 	reqBody.Set("code", c.AuthCode)
 	reqBody.Set("redirect_uri", c.OIDCRedirectURI)
+	reqBody.Set("client_id", c.ClientID)
 	reqBody.Set("code_verifier", c.CodeVerifier)
 
-	tokenEndpoint := "/oauth2/v2.0/token"
-	tokenUrl := fmt.Sprintf("%s%s", c.IssuerURL, tokenEndpoint)
-	req, _ := http.NewRequest("POST", tokenUrl, strings.NewReader(reqBody.Encode()))
+	req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody.Encode()))
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create request)")
+	}
 	return req
+}
+
+func (c *oauthClient) getDiscoveryEndpoints() (string, string, string, error) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
+		},
+	}
+	req, err := http.NewRequest("GET", c.IssuerURL+".well-known/openid-configuration", nil)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create request)")
+	}
+
+	respData := map[string]interface{}{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to get OIDC dicovery data: %v", err)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err := json.Unmarshal(body, &respData); err != nil {
+		return "", "", "", fmt.Errorf("failed to unmarshal response body: %v", err)
+	}
+
+	return respData["authorization_endpoint"].(string), respData["token_endpoint"].(string), respData["userinfo_endpoint"].(string), nil
+}
+
+func (c *oauthClient) getUserEmailFromIDP(accessToken, userInfoEndpoint string) (string, error) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.OIDCCLientTLSVerify},
+		},
+	}
+	req, err := http.NewRequest("GET", userInfoEndpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("unable to create request to get user info: %s", err.Error())
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("unable to get user info from IDP: %s", err.Error())
+	}
+	defer resp.Body.Close()
+
+	respData := map[string]interface{}{}
+	body, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &respData); err != nil {
+		return "", fmt.Errorf("unable to unmarshal user info response: %s", err.Error())
+	}
+
+	email, ok := respData["preferred_username"]
+	if !ok {
+		return "", errors.New("no email found in user info response")
+	}
+	return email.(string), nil
 }

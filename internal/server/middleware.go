@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -79,13 +78,13 @@ func getMiddleware(c *config.Config, prvds *providers.ModuleProviders) []echo.Mi
 			Browse:  false,
 			HTML5:   true,
 		}),
-		TokenValidation(c.OIDCClientID, c.OIDCIssuer, authSkipper),
+		UserIdentity(c.OIDCClientID, c.OIDCIssuer, authSkipper),
 		userAccessContextMiddleware(prvds, userContextSkipper),
 	}
 }
 
-// TokenValidation is a middleware that validates the authorization token in every api request
-func TokenValidation(cid, issuer string, skipper func(c echo.Context) bool) echo.MiddlewareFunc {
+// UserIdentity is a middleware that extracts the user's identity from the request's session
+func UserIdentity(cid, issuer string, skipper func(c echo.Context) bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			if skipper(ctx) {
@@ -96,22 +95,12 @@ func TokenValidation(cid, issuer string, skipper func(c echo.Context) bool) echo
 				return ctx.JSON(http.StatusForbidden, fmt.Sprintf("forbidden. Unable to get auth info: %s", err.Error()))
 			}
 
-			token, _, err := getIDTokenWithNonce(sess)
-			if err != nil {
-				clearSession(ctx, sess)
-				return ctx.JSON(http.StatusForbidden, fmt.Sprintf("forbidden. Unable to read id token: %s", err.Error()))
+			username := sess.Values["preferred_username"]
+			if username == nil || username == "" {
+				return ctx.JSON(http.StatusForbidden, "forbidden. Unable to read user context details from request (unauthenticated)")
 			}
 
-			// Gather username from claim
-			parser := jwt.Parser{}
-			pt, _, _ := parser.ParseUnverified(token, jwt.MapClaims{})
-			claims := pt.Claims.(jwt.MapClaims)
-
-			username, ok := claims["preferred_username"].(string)
-			if !ok {
-				return ctx.JSON(http.StatusForbidden, fmt.Sprintf("forbidden. Missing required claims. %v", claims))
-			}
-			userIdentityParts := strings.Split(username, "@")
+			userIdentityParts := strings.Split(username.(string), "@")
 			// Check if username contains a '.' -- Fix for local-dev and staging
 			if strings.Contains(userIdentityParts[0], ".") {
 				subparts := strings.Split(userIdentityParts[0], ".")
@@ -120,7 +109,7 @@ func TokenValidation(cid, issuer string, skipper func(c echo.Context) bool) echo
 
 			// These are set by the auth callback handler
 			ctx.Set("username", userIdentityParts[0])
-			ctx.Set("email", strings.ToLower(claims["email"].(string)))
+			ctx.Set("email", strings.ToLower(username.(string)))
 			return next(ctx)
 		}
 	}
@@ -129,7 +118,7 @@ func TokenValidation(cid, issuer string, skipper func(c echo.Context) bool) echo
 // getIDTokenWithNonce extracts a id_token token from the request's session along with the nonce value
 func getIDTokenWithNonce(sess *sessions.Session) (string, string, error) {
 	if sess.Values["id_token"] == nil || sess.Values["id_token"] == "" {
-		return "", "", errors.New("no ID token found in session")
+		return "", "", errors.New("no id token found in session")
 	}
 
 	if sess.Values["nonce"] == nil || sess.Values["nonce"] == "" {
