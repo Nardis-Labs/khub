@@ -391,7 +391,7 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
               </StructuredListBody>
             </StructuredListWrapper>
           </AccordionItem>
-          <AccordionItem title="Pod Exec Plugins" className="accordian-border-0">
+          <AccordionItem title="Pod Exec Plugins" className="accordian-border-0" open>
             <StructuredListWrapper selection>
               <StructuredListHead>
                 <StructuredListRow head>
