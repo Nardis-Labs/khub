@@ -397,7 +397,31 @@ func (c K8sSessionHandler) RunPodExecPlugin(ctx echo.Context) error {
 		return ctx.JSON(http.StatusForbidden, "forbidden. You do not have write permissions for this resource")
 	}
 
-	stdout, stderr, err := c.provider.K8sProvider.ExecutePodExecPlugin(resourceInfo.Namespace, resourceInfo.Name, resourceInfo.Plugin)
+	// Query the exec plugin to ensure no malicious commands are being injected from the client
+	appConfig, err := c.provider.StorageProvider.Session.SDK.GetDynamicAppConfig()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("unable to load exec plugin configurations: %v", err))
+	}
+
+	plugin := types.K8sPodExecPlugin{}
+	pluginExists := false
+	for _, p := range appConfig.Data.K8sPodExecPlugins {
+		if p.Name == resourceInfo.Plugin.Name {
+			plugin = p
+			pluginExists = true
+			break
+		}
+	}
+
+	if !pluginExists {
+		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("plugin with name, %s, does not exist", resourceInfo.Plugin.Name))
+	}
+
+	if plugin.Command != resourceInfo.Plugin.Command {
+		return ctx.JSON(http.StatusBadRequest, fmt.Sprintf("plugin command does not match the expected command for %s", resourceInfo.Plugin.Name))
+	}
+
+	stdout, stderr, err := c.provider.K8sProvider.ExecutePodExecPlugin(resourceInfo.Namespace, resourceInfo.Name, plugin)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, fmt.Sprintf("unable to run pod exec plugin: %v", err))
 	}

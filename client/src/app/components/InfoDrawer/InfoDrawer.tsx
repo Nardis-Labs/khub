@@ -9,8 +9,9 @@ import { Recycle, Report } from "@carbon/icons-react";
 import CodeMirror from '@uiw/react-codemirror';
 import { yaml as yamlint } from '@codemirror/lang-yaml';
 import yaml from 'js-yaml';
-import { useDeletePodMutation, useRolloutRestartMutation, useTomcatThreadDumpMutation } from '../../../service/khub';
+import { useDeletePodMutation, useExecPluginMutation, useRolloutRestartMutation } from '../../../service/khub';
 import { updateNotifications } from '../../../service/notifications';
+import { IPodExecPlugin } from '../../../service/types/AppConfig';
 
 type InfoDrawerProps = {
   open: boolean;
@@ -28,6 +29,7 @@ type InfoDrawerProps = {
   className?: string;
   customIdSuffix?: string;
   overlayClassName?: string;
+  podExecPlugins?: IPodExecPlugin[]
 };
 
 const getDirectionStyle = (dir: string, size?: number | string): Record<string, never> | React.CSSProperties => {
@@ -73,6 +75,7 @@ const getDirectionStyle = (dir: string, size?: number | string): Record<string, 
 };
 
 export const InfoDrawer: React.FC<InfoDrawerProps> = (props) => {
+  
   const appTheme = useSelector((state: RootState) => state.appTheme);
   const resourceDrawer: any = useSelector((state: RootState) => state.treeMapResourceDrawer);
   const {
@@ -131,7 +134,7 @@ export const InfoDrawer: React.FC<InfoDrawerProps> = (props) => {
 
   const dispatch = useAppDispatch();
   const [rolloutRestart] = useRolloutRestartMutation();
-  const [takeTomcatThreadDump] = useTomcatThreadDumpMutation();
+  const [execPlugin] = useExecPluginMutation();
 
   const handleRolloutRestart = (res: any) => {
     rolloutRestart({name: res.name, namespace: res.namespace, kind: res.kind, labels: res.metadata.labels}).unwrap()
@@ -139,11 +142,11 @@ export const InfoDrawer: React.FC<InfoDrawerProps> = (props) => {
       .catch((error) => dispatch(updateNotifications({notifications: [{notif: 'Error restarting ' + res.name + ' ' + JSON.stringify(error), status: 'error'}]})));
   };
 
-  const handleTomcatThreadDump = (res: any) => {
-    dispatch(updateNotifications({notifications: [{notif: res.name + ' thread dump initiated ' , status: 'info'}]}));
-    takeTomcatThreadDump({name: res.name, namespace: res.namespace, kind: res.kind}).unwrap()
-      .then((payload) => dispatch(updateNotifications({notifications: [{notif: res.name + ' thread dump success: ' + payload, status: 'success'}]})))
-      .catch((error) => dispatch(updateNotifications({notifications: [{notif: 'Error taking thread dump ' + res.name + ' ' + JSON.stringify(error), status: 'error'}]})));
+  const handleExecPlugin = (res: any) => {
+    dispatch(updateNotifications({notifications: [{notif: res.name + ' exec plugin initiated ' , status: 'info'}]}));
+    execPlugin({name: res.name, namespace: res.namespace, kind: res.kind, container: res.container, command: res.command, pluginName: res.pluginName}).unwrap()
+      .then((payload) => dispatch(updateNotifications({notifications: [{notif: res.name + ' pod exec success: ' + payload, status: 'success'}]})))
+      .catch((error) => dispatch(updateNotifications({notifications: [{notif: 'Error running pod exec plugin ' + res.name + ' ' + JSON.stringify(error), status: 'error'}]})));
   };
   
   const handleYamlRender = (data: any) => {
@@ -164,6 +167,34 @@ export const InfoDrawer: React.FC<InfoDrawerProps> = (props) => {
     deletePod({podName: podName, namespace: namespace}).unwrap()
     .then(() => dispatch(updateNotifications({notifications: [{notif: podName + ' delete initiated', status: 'success'}]})))
     .catch((error) => dispatch(updateNotifications({notifications: [{notif: 'Error deleting ' + podName + ' ' + JSON.stringify(error), status: 'error'}]})));
+  };
+
+  const getExecPlugins = (resource: any): any[] => {
+
+    const plugins: any[] = [];
+    if (resource?.resourceType === 'pod') {
+      console.log('resource: ', JSON.stringify(props.podExecPlugins));
+      props.podExecPlugins?.forEach((plugin: IPodExecPlugin) => {
+        console.log('plugin: ', plugin.name);
+        plugin.labelFilter.split(',').forEach((labelValue: string) => {
+          console.log('labelValue: ', labelValue);
+          const labelKeys = Object.keys(resource?.resourceData?.metadata?.labels); 
+          labelKeys.forEach((labelKey: string) => {
+            console.log('labelKey: ', labelKey);
+            if (resource?.resourceData?.metadata?.labels[labelKey] === labelValue) {
+              if (resource?.resourceData?.spec?.containers !== undefined) {
+                resource?.resourceData?.spec?.containers.forEach((container: any) => {
+                  if (container.name !== undefined && container.name === plugin.container) {
+                    plugins.push(plugin);
+                  }
+                });
+              }
+            }
+          });
+        });
+      });
+    }
+    return plugins;
   };
 
   return (
@@ -191,23 +222,20 @@ export const InfoDrawer: React.FC<InfoDrawerProps> = (props) => {
                         () => handleDeletePod(resourceDrawer.data?.resourceData?.metadata?.name, resourceDrawer.data?.resourceData?.metadata?.namespace)
                       }
                       >Delete {resourceDrawer.data?.resourceType}</Button>
-                    <Button renderIcon={Report} kind="tertiary" onClick={() => {
-                        if (resourceDrawer.data?.resourceData?.spec?.containers !== undefined) {
-                          let hasTomcatContainer = false;
-                          resourceDrawer.data?.resourceData?.spec?.containers.forEach((container: any) => {
-                            if (container.name !== undefined && container.name === 'tomcat') {
-                              hasTomcatContainer = true;
-                            }
-                          });
-                          if (hasTomcatContainer) {
-                            handleTomcatThreadDump({name: resourceDrawer.data?.resourceData?.metadata?.name, namespace: resourceDrawer.data?.resourceData?.metadata?.namespace, kind: resourceDrawer.data.resourceType});
-                          } else {  
-                            dispatch(updateNotifications({notifications: [{notif: `The pod, ${resourceDrawer.data?.resourceData?.metadata?.name}, does not have a tomcat container. Skipping thread dump action.`, status: 'warning'}]}));
-                          }
-                        }
-                    }}>Thread dump</Button>
+                    {getExecPlugins(resourceDrawer.data).map((plugin: any) => {
+                        return <Button key={plugin.name} renderIcon={Report} kind="tertiary" style={{marginLeft: '5px'}} onClick={() => {
+                          handleExecPlugin({
+                              name: resourceDrawer.data?.resourceData?.metadata?.name, 
+                              namespace: resourceDrawer.data?.resourceData?.metadata?.namespace, 
+                              kind: resourceDrawer.data.resourceType,
+                              container: plugin.container,
+                              command: plugin.command,
+                              pluginName: plugin.name
+                            });
+                        }}>{plugin.name}</Button>;
+                      })
+                    }
                   </div>
-                  
                 }
                 {(resourceDrawer.data?.resourceType === 'node') &&
                   <div>

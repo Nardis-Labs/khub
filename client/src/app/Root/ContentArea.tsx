@@ -38,7 +38,7 @@ export const ContentArea = () => {
           <MySQLReplTopo />
         }/>
         <Route path="/pods" element={
-          <Pods />
+          <Pods appConfig={appConfig}/>
         }/>
         <Route path="/deployments" element={
           <Deployments />

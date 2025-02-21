@@ -17,6 +17,7 @@ type DynamicConfigJSONB struct {
 }
 
 type K8sPodExecPlugin struct {
+	Name        string `json:"name"`
 	Enabled     bool   `json:"enabled"`
 	Command     string `json:"command"`
 	Container   string `json:"container"`

@@ -191,38 +191,40 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
 
   const [podExecPluginModalOpen, setPodExecPluginModalOpen] = React.useState(false);
   const [selectedPluginName, setSelectedPluginName] = React.useState('');
+  const [selectedPluginContainerFilter, setSelectedPluginContainerFilter] = React.useState('');
   const [selectedPluginCommand, setSelectedPluginCommand] = React.useState('');
   const [selectedPluginLabelFilter, setSelectedPluginLabelFilter] = React.useState('');
 
-  const handleUpsertPodExecPlugin = (name: string, command: string, labelFilter: string) => {
+  const handleUpsertPodExecPlugin = (name: string, container: string, command: string, labelFilter: string) => {
     if (!name || !command) return;
 
-    const plugins = [...(appConfig.data?.podExecPlugins || [])];
+    const plugins = [...(appConfig.data?.k8sPodExecPlugins || [])];
     const existingIndex = plugins.findIndex(p => p.name === name);
     
     if (existingIndex >= 0) {
-      plugins[existingIndex] = { name, command, labelFilter };
+      plugins[existingIndex] = { name, container, command, labelFilter };
     } else {
-      plugins.push({ name, command, labelFilter });
+      plugins.push({ name, container, command, labelFilter });
     }
 
     const updatedAppConfig: IAppConfig = {
       id: appConfig.id,
       data: {
         ...appConfig.data,
-        podExecPlugins: plugins
+        k8sPodExecPlugins: plugins
       }
     };
     
     handleUpdateAppConfig(updatedAppConfig, 'podExecPlugins');
     setPodExecPluginModalOpen(false);
     setSelectedPluginName('');
+    setSelectedPluginContainerFilter('');
     setSelectedPluginCommand('');
     setSelectedPluginLabelFilter('');
   };
 
   const handleRemovePodExecPlugin = (pluginName: string) => {
-    const updatedPlugins = appConfig.data?.podExecPlugins.filter(
+    const updatedPlugins = appConfig.data?.k8sPodExecPlugins.filter(
       (plugin: any) => plugin.name !== pluginName
     );
 
@@ -230,7 +232,7 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
       id: appConfig.id,
       data: {
         ...appConfig.data,
-        podExecPlugins: updatedPlugins
+        k8sPodExecPlugins: updatedPlugins
       }
     };
 
@@ -394,14 +396,16 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
               <StructuredListHead>
                 <StructuredListRow head>
                   <StructuredListCell head>Plugin Name</StructuredListCell>
+                  <StructuredListCell head>Container Filter</StructuredListCell>
                   <StructuredListCell head>Command</StructuredListCell>
                   <StructuredListCell head>Actions</StructuredListCell>
                 </StructuredListRow>
               </StructuredListHead>
               <StructuredListBody>
-                {appConfig?.data?.podExecPlugins && appConfig?.data?.podExecPlugins.map((plugin: any) => (
+                {appConfig?.data?.k8sPodExecPlugins && appConfig?.data?.k8sPodExecPlugins.map((plugin: any) => (
                   <StructuredListRow key={plugin.name}>
                     <StructuredListCell noWrap>{plugin.name}</StructuredListCell>
+                    <StructuredListCell noWrap>{plugin.container}</StructuredListCell>
                     <StructuredListCell>{plugin.command}</StructuredListCell>
                     <StructuredListCell>
                       <ButtonSet stacked>
@@ -410,6 +414,7 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
                           size='sm' 
                           onClick={() => {
                             setSelectedPluginName(plugin.name);
+                            setSelectedPluginContainerFilter(plugin.container);
                             setSelectedPluginCommand(plugin.command);
                             setPodExecPluginModalOpen(true);
                             setSelectedPluginLabelFilter(plugin.labelFilter);
@@ -618,6 +623,7 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
       <ComposedModal open={podExecPluginModalOpen} onClose={() => {
         setPodExecPluginModalOpen(false);
         setSelectedPluginName('');
+        setSelectedPluginContainerFilter('');
         setSelectedPluginCommand('');
         setSelectedPluginLabelFilter('');
       }}>
@@ -628,33 +634,45 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
             onChange={(e: any) => {setSelectedPluginName(e.target.value);}}
             id="pluginName"
             labelText="Plugin name"
-            placeholder="e.g. kubectl"
+            placeholder="e.g. list-files"
             style={{marginBottom: '1rem'}}
             value={selectedPluginName}
+          />
+          <TextInput 
+            data-modal-primary-focus
+            onChange={(e: any) => {setSelectedPluginContainerFilter(e.target.value);}}
+            id="pluginContainerFilter"
+            labelText="Plugin container filter"
+            placeholder="e.g. busybox"
+            style={{marginBottom: '1rem'}}
+            value={selectedPluginContainerFilter}
           />
           <TextInput 
             data-modal-primary-focus
             onChange={(e: any) => {setSelectedPluginCommand(e.target.value);}}
             id="pluginCommand"
             labelText="Command"
-            placeholder="e.g. kubectl"
+            placeholder="e.g. ls -l"
+            value={selectedPluginCommand}
           />
           <TextInput 
             data-modal-primary-focus
             onChange={(e: any) => {setSelectedPluginLabelFilter(e.target.value);}}
             id="pluginLabelFilter"
             labelText="Label filter"
-            placeholder="e.g. app=kubectl"
+            placeholder="e.g. busybox"
+            value={selectedPluginLabelFilter}
           />
           <ButtonSet style={{marginTop: '20px'}}>
             <Button kind="primary" onClick={() => {
-              handleUpsertPodExecPlugin(selectedPluginName, selectedPluginCommand, selectedPluginLabelFilter);
+              handleUpsertPodExecPlugin(selectedPluginName, selectedPluginContainerFilter, selectedPluginCommand, selectedPluginLabelFilter);
             }}>
               Submit
             </Button>
             <Button kind="secondary" onClick={() => {
               setPodExecPluginModalOpen(false);
               setSelectedPluginName('');
+              setSelectedPluginContainerFilter('');
               setSelectedPluginCommand('');
               setSelectedPluginLabelFilter('');
             }}>
