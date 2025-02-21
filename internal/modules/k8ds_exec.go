@@ -4,19 +4,20 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/sullivtr/k8s_platform/internal/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-func (sdk *K8sSDK) TakeTomcatThreadDump(namespace, podName string) (string, string, error) {
-	cmd := []string{"/bin/bash", "/opt/reports/threaddump.sh"}
-
-	eOptions := &v1.PodExecOptions{
+func (sdk *K8sSDK) ExecutePodExecPlugin(namespace, podName string, plugin types.K8sPodExecPlugin) (string, string, error) {
+	cmd := strings.Split(plugin.Command, " ")
+	execOptions := &v1.PodExecOptions{
 		Command:   cmd,
-		Container: "tomcat",
+		Container: plugin.Container,
 		Stdin:     false,
 		Stdout:    true,
 		Stderr:    true,
@@ -32,11 +33,11 @@ func (sdk *K8sSDK) TakeTomcatThreadDump(namespace, podName string) (string, stri
 		Resource("pods").
 		Name(podName).
 		SubResource("exec").
-		VersionedParams(eOptions, scheme.ParameterCodec)
+		VersionedParams(execOptions, scheme.ParameterCodec)
 
 	exec, err := remotecommand.NewSPDYExecutor(sdk.restClientConfig, "POST", execReq.URL())
 	if err != nil {
-		return "", "", fmt.Errorf("%w Failed initialize remote executor for (tomcat thread dump) on %v/%v", err, namespace, podName)
+		return "", "", fmt.Errorf("%w Failed initialize remote executor for (%s: %s) on %v/%v", err, plugin.Container, plugin.Command, namespace, podName)
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -47,7 +48,7 @@ func (sdk *K8sSDK) TakeTomcatThreadDump(namespace, podName string) (string, stri
 	})
 	if err != nil {
 		cancel()
-		return "", "", fmt.Errorf("%w Failed executing command (tomcat thread dump) on %v/%v", err, namespace, podName)
+		return "", "", fmt.Errorf("%w Failed executing command (%s) on %v/%v", err, plugin.Command, namespace, podName)
 	}
 	return buf.String(), errBuf.String(), nil
 }

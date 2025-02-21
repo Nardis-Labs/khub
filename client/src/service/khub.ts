@@ -222,14 +222,19 @@ export const khubApi = createApi({
         }
       })
     }),
-    tomcatThreadDump: builder.mutation<any, { kind: string, name: string, namespace: string }>({
+    execPlugin: builder.mutation<any, { kind: string, name: string, namespace: string, container: string, command: string, pluginName: string }>({
       query: (arg) => ({
-        url: `/k8s/threaddump`,
+        url: `/k8s/exec`,
         method: 'POST',
         body: {
           kind: arg.kind,
           name: arg.name,
-          namespace: arg.namespace
+          namespace: arg.namespace,
+          plugin: {
+            name: arg.pluginName,
+            container: arg.container,
+            command: arg.command
+          }
         }
       })
     }),
@@ -356,7 +361,7 @@ export const {
   useGetJobsQuery,
   useGetClusterEventsQuery,
   useRolloutRestartMutation,
-  useTomcatThreadDumpMutation,
+  useExecPluginMutation,
   useGetUsersQuery,
   useUpdateUserThemeMutation,
   useGetGroupsQuery,

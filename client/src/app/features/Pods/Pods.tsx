@@ -11,8 +11,13 @@ import { InformationFilled, OverflowMenuVertical, Recycle } from '@carbon/icons-
 import { ResourceDataTable } from '../../components/ResourceDataTable/ResourceDataTable';
 import { updatePodFilter } from '../../../service/resource-filters';
 import { updateNotifications } from '../../../service/notifications';
+import { IAppConfig } from '../../../service/types/AppConfig';
 
-export const Pods = () => {
+interface PodsProps {
+  appConfig: IAppConfig;
+}
+
+export const Pods = ({appConfig}: PodsProps) => {
   const dispatch = useAppDispatch();
   const {data: pods = [], isLoading} = useGetPodsQuery({});
 
@@ -172,7 +177,7 @@ export const Pods = () => {
         batchActions={[]}
       />
       
-      <InfoDrawer open={resourceDrawer.open} onClose={closeDrawer} direction="right" style={{ padding: '75px 20px 20px 20px' }}/>
+      <InfoDrawer open={resourceDrawer.open} onClose={closeDrawer} direction="right" style={{ padding: '75px 20px 20px 20px' }} podExecPlugins={appConfig?.data?.k8sPodExecPlugins}/>
     </div>
   );
 };

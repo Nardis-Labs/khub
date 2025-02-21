@@ -47,7 +47,7 @@ func registerK8sResources(e *echo.Echo, prv *providers.ModuleProviders) error {
 	e.GET("/api/k8s/nodes", k8sHandler.GetNodes)
 	e.GET("/api/k8s/clusterevents", k8sHandler.GetClusterEvents)
 	e.POST("/api/k8s/rolloutrestart", k8sHandler.RolloutRestart)
-	e.POST("/api/k8s/threaddump", k8sHandler.TakeTomcatThreadDump)
+	e.POST("/api/k8s/exec", k8sHandler.RunPodExecPlugin)
 	return nil
 }
 
