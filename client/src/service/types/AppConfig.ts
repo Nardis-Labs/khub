@@ -10,4 +10,11 @@ export interface IAppConfigData {
   enableK8sGlobalReadOnly: boolean;
   k8sClusterName: string;
   k8sClusterNamespaces: string[];
+  podExecPlugins: IPodExecPlugin[];
+}
+
+export interface IPodExecPlugin {
+  name: string;
+  command: string;
+  labelFilter: string;
 }

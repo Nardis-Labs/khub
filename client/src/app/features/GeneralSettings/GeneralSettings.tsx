@@ -189,6 +189,53 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
     handleUpdateAppConfig(updatedAppConfig, 'k8sReplicaScaleLimits');
   };
 
+  const [podExecPluginModalOpen, setPodExecPluginModalOpen] = React.useState(false);
+  const [selectedPluginName, setSelectedPluginName] = React.useState('');
+  const [selectedPluginCommand, setSelectedPluginCommand] = React.useState('');
+  const [selectedPluginLabelFilter, setSelectedPluginLabelFilter] = React.useState('');
+
+  const handleUpsertPodExecPlugin = (name: string, command: string, labelFilter: string) => {
+    if (!name || !command) return;
+
+    const plugins = [...(appConfig.data?.podExecPlugins || [])];
+    const existingIndex = plugins.findIndex(p => p.name === name);
+    
+    if (existingIndex >= 0) {
+      plugins[existingIndex] = { name, command, labelFilter };
+    } else {
+      plugins.push({ name, command, labelFilter });
+    }
+
+    const updatedAppConfig: IAppConfig = {
+      id: appConfig.id,
+      data: {
+        ...appConfig.data,
+        podExecPlugins: plugins
+      }
+    };
+    
+    handleUpdateAppConfig(updatedAppConfig, 'podExecPlugins');
+    setPodExecPluginModalOpen(false);
+    setSelectedPluginName('');
+    setSelectedPluginCommand('');
+    setSelectedPluginLabelFilter('');
+  };
+
+  const handleRemovePodExecPlugin = (pluginName: string) => {
+    const updatedPlugins = appConfig.data?.podExecPlugins.filter(
+      (plugin: any) => plugin.name !== pluginName
+    );
+
+    const updatedAppConfig: IAppConfig = {
+      id: appConfig.id,
+      data: {
+        ...appConfig.data,
+        podExecPlugins: updatedPlugins
+      }
+    };
+
+    handleUpdateAppConfig(updatedAppConfig, 'podExecPlugins');
+  };
   const [clusterName, setClusterName] = React.useState('');
 
   useEffect(() => {
@@ -341,6 +388,59 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
                 </StructuredListRow>
               </StructuredListBody>
             </StructuredListWrapper>
+          </AccordionItem>
+          <AccordionItem title="Pod Exec Plugins" className="accordian-border-0">
+            <StructuredListWrapper selection>
+              <StructuredListHead>
+                <StructuredListRow head>
+                  <StructuredListCell head>Plugin Name</StructuredListCell>
+                  <StructuredListCell head>Command</StructuredListCell>
+                  <StructuredListCell head>Actions</StructuredListCell>
+                </StructuredListRow>
+              </StructuredListHead>
+              <StructuredListBody>
+                {appConfig?.data?.podExecPlugins && appConfig?.data?.podExecPlugins.map((plugin: any) => (
+                  <StructuredListRow key={plugin.name}>
+                    <StructuredListCell noWrap>{plugin.name}</StructuredListCell>
+                    <StructuredListCell>{plugin.command}</StructuredListCell>
+                    <StructuredListCell>
+                      <ButtonSet stacked>
+                        <Button 
+                          tooltipPosition='right' 
+                          size='sm' 
+                          onClick={() => {
+                            setSelectedPluginName(plugin.name);
+                            setSelectedPluginCommand(plugin.command);
+                            setPodExecPluginModalOpen(true);
+                            setSelectedPluginLabelFilter(plugin.labelFilter);
+                          }} 
+                          iconDescription="Edit" 
+                          style={{border: 'none'}} 
+                          hasIconOnly 
+                          renderIcon={TbEdit} 
+                          kind="tertiary"
+                        />
+                        <Button 
+                          tooltipPosition='right' 
+                          size='sm' 
+                          onClick={() => handleRemovePodExecPlugin(plugin.name)} 
+                          iconDescription="Remove" 
+                          style={{border: 'none'}} 
+                          hasIconOnly 
+                          renderIcon={TbTrash} 
+                          kind="danger--tertiary"
+                        />
+                      </ButtonSet>
+                    </StructuredListCell>
+                  </StructuredListRow>
+                ))}
+              </StructuredListBody>
+            </StructuredListWrapper>
+            <ClickableTile style={{display: 'flex', justifyContent: 'center'}} onClick={() => setPodExecPluginModalOpen(true)}>
+              <Tooltip label='add plugin'>
+                <PiPlusBold size={30}/>
+              </Tooltip>
+            </ClickableTile>
           </AccordionItem>
         </Accordion>
       </Tile>
@@ -511,6 +611,56 @@ export const GeneralSettings = ({appConfig}: GeneralSettingsProps) => {
                 Cancel
             </Button>
           </ButtonSet>
+        </ModalBody>
+      </ComposedModal>
+
+      {/* Pod Exec Plugin Modal */}
+      <ComposedModal open={podExecPluginModalOpen} onClose={() => {
+        setPodExecPluginModalOpen(false);
+        setSelectedPluginName('');
+        setSelectedPluginCommand('');
+        setSelectedPluginLabelFilter('');
+      }}>
+        <ModalHeader label="Pod Exec Plugin" title="Add a new pod exec plugin" />
+        <ModalBody>
+          <TextInput 
+            data-modal-primary-focus
+            onChange={(e: any) => {setSelectedPluginName(e.target.value);}}
+            id="pluginName"
+            labelText="Plugin name"
+            placeholder="e.g. kubectl"
+            style={{marginBottom: '1rem'}}
+            value={selectedPluginName}
+          />
+          <TextInput 
+            data-modal-primary-focus
+            onChange={(e: any) => {setSelectedPluginCommand(e.target.value);}}
+            id="pluginCommand"
+            labelText="Command"
+            placeholder="e.g. kubectl"
+          />
+          <TextInput 
+            data-modal-primary-focus
+            onChange={(e: any) => {setSelectedPluginLabelFilter(e.target.value);}}
+            id="pluginLabelFilter"
+            labelText="Label filter"
+            placeholder="e.g. app=kubectl"
+          />
+          <ButtonSet style={{marginTop: '20px'}}>
+            <Button kind="primary" onClick={() => {
+              handleUpsertPodExecPlugin(selectedPluginName, selectedPluginCommand, selectedPluginLabelFilter);
+            }}>
+              Submit
+            </Button>
+            <Button kind="secondary" onClick={() => {
+              setPodExecPluginModalOpen(false);
+              setSelectedPluginName('');
+              setSelectedPluginCommand('');
+              setSelectedPluginLabelFilter('');
+            }}>
+              Cancel
+            </Button>
+          </ButtonSet>  
         </ModalBody>
       </ComposedModal>
     </>
