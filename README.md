@@ -1,5 +1,7 @@
 <img src="./khub.png" width="250px"/>
 
+Visit [the khub website](https://nardis-labs.github.io/khub-site/) for more information on the project, and for screenshots of the UI.
+
 ## Overview and architecture
 
 `khub` was developed to offer a free and open source Kubernetes UI that aims to run in network isolated environments. While `khub` can run from outside the designated cluster, it is designed primarily to run 
