@@ -103,16 +103,6 @@ spec:
             value: "redis-master.redis:6379"
           - name: khub_K8S_TREE_MAP_LABEL_SELECTOR
             value: "app.kubernetes.io/name,k8s-app"
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              configMapKeyRef:
-                name: awscreds
-                key: AWS_ACCESS_KEY_ID
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              configMapKeyRef:
-                name: awscreds
-                key: AWS_SECRET_ACCESS_KEY
 
 ---
 

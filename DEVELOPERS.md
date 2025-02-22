@@ -1,10 +1,16 @@
 ## Guide for developers of this application
 
 ## [Required Tools]
+
+This project runs a real Kubernetes cluster (kind) for local development. Its an integration environment, so it requires
+some real services to be running.
+
 - [Go](https://go.dev/)
 - [Air (Live Reload for Go)](https://github.com/cosmtrek/air)
 - [Yarn](https://yarnpkg.com/)
 - [Node](https://nodejs.org/en)
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+- [helm](https://helm.sh/)
 - [Kind](https://kind.sigs.k8s.io/)
 - [Podman](https://podman.io/docs/installation)
 
@@ -21,7 +27,8 @@ For local development, use of any oauth2 provider will work. (Zitadel, Okta, Azu
 - You will need an oauth provider in order to run this application as it relies on oauth to handle authentication 
   and to authorize users based on their ABAC designated permissions and groups. 
 
-  You will need an OAuth2.0 client setup as a PKCE AuthCode flow client with a client ID, and a client Secret.
+  You will need an OAuth2.0 client setup as a PKCE AuthCode flow client with a client ID. We recommend using a free tier provider like 
+  [Zitadel](https://zitadel.com/) for local development. 
 
 ## Dev workflow
 
