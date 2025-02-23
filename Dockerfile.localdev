@@ -1,5 +1,5 @@
 # Use a lightweight Go Alpine image for the final build
-FROM golang:1.22.0-alpine
+FROM golang:1.23.0-alpine
 
 # Set the working directory to /app
 WORKDIR /app
