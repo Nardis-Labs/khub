@@ -9,7 +9,7 @@ khub:
   enabled: true
   image:
     repository: khub
-    tag: latest
+    tag: 0.0.2-rc
     pullPolicy: IfNotPresent
   replicaCount: 1
   resources:
@@ -28,7 +28,7 @@ dataSink:
   enabled: true
   image:
     repository: khub
-    tag: latest
+    tag: 0.0.2-rc
     pullPolicy: IfNotPresent
   replicaCount: 1
   resources:
@@ -47,7 +47,7 @@ mysqlTopologySync:
   enabled: false
   schedule: "*/30 * * * *"
   image:
-    repository: khub-mysql-sync
+    repository: khub
     tag: latest
     pullPolicy: IfNotPresent
   resources:

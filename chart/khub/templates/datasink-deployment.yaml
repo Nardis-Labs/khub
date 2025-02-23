@@ -1,18 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "khub.fullname" . }}
+  name: {{ include "khub.fullname" . }}-datasink
   labels:
     {{- include "khub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: datasink
 spec:
-  replicas: {{ .Values.khub.replicaCount }}
+  replicas: {{ .Values.dataSink.replicaCount }}
   selector:
     matchLabels:
       {{- include "khub.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: datasink
   template:
     metadata:
       labels:
         {{- include "khub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: datasink
     spec:
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
@@ -20,11 +23,11 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.khub.image.repository }}:{{ .Values.khub.image.tag }}"
-          imagePullPolicy: {{ .Values.khub.image.pullPolicy }}
+          image: "{{ .Values.dataSink.image.repository }}:{{ .Values.dataSink.image.tag }}"
+          imagePullPolicy: {{ .Values.dataSink.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           resources:
-            {{- toYaml .Values.khub.resources | nindent 12 }}
+            {{- toYaml .Values.dataSink.resources | nindent 12 }}
