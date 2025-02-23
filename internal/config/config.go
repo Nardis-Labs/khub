@@ -36,6 +36,7 @@ type Config struct {
 	OIDCIssuer          string `json:"-" mapstructure:"oidc_issuer"`
 	OIDCRedirectURI     string `json:"-" mapstructure:"oidc_redirect_uri"`
 	OIDCClientID        string `json:"-" mapstructure:"oidc_client_id"`
+	OIDCClientSecret    string `json:"-" mapstructure:"oidc_client_secret"`
 	OIDCCLientTLSVerify bool   `json:"-" mapstructure:"oidc_client_tls_verify"`
 	OIDCAudience        string `json:"-" mapstructure:"oidc_audience"`
 
@@ -61,11 +62,12 @@ func Load(version string, cfgFile string) *Config {
 		Timeout:                    2000,
 		BaseURL:                    "http://localhost:3000",
 		AuthSessionHandlerKey:      "auth-session",
-		OIDCIssuer:                 "{REPLACE_ME}",
+		OIDCIssuer:                 "",
 		OIDCRedirectURI:            "http://localhost:8080/authorization-code/callback",
-		OIDCClientID:               "{REPLACE_ME}",
+		OIDCClientID:               "",
+		OIDCClientSecret:           "",
 		OIDCCLientTLSVerify:        false, // Zitadel cloud's self-signed cert is not trusted by default, for example
-		OIDCAudience:               "{REPLACE_ME}",
+		OIDCAudience:               "",
 		K8sInCluster:               true,
 		RedisAddress:               "redis-master.redis:6379",
 		DBUserName:                 "postgres",
@@ -96,6 +98,7 @@ func Load(version string, cfgFile string) *Config {
 	_ = viper.BindEnv("OIDC_ISSUER")
 	_ = viper.BindEnv("OIDC_REDIRECT_URI")
 	_ = viper.BindEnv("OIDC_CLIENT_ID")
+	_ = viper.BindEnv("OIDC_CLIENT_SECRET")
 	_ = viper.BindEnv("OIDC_CLIENT_TLS_VERIFY")
 	_ = viper.BindEnv("OIDC_AUDIENCE")
 	_ = viper.BindEnv("REDIS_ADDRESS")

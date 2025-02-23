@@ -85,6 +85,7 @@ func (c *AuthSessionHandler) Login(ctx echo.Context) error {
 
 	oAuthClient := &oauthClient{
 		ClientID:            c.provider.Config.OIDCClientID,
+		ClientSecret:        c.provider.Config.OIDCClientSecret,
 		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
 		IDP:                 c.provider.Config.AuthIDP,
 		Client:              &http.Client{},
@@ -161,6 +162,7 @@ func (c *AuthSessionHandler) AuthCodeCallback(ctx echo.Context) error {
 
 	oAuthClient := &oauthClient{
 		ClientID:            c.provider.Config.OIDCClientID,
+		ClientSecret:        c.provider.Config.OIDCClientSecret,
 		OIDCCLientTLSVerify: c.provider.Config.OIDCCLientTLSVerify,
 		IDP:                 c.provider.Config.AuthIDP,
 		Client:              &http.Client{},
@@ -360,6 +362,7 @@ func (c *oauthClient) constructOauth2TokenRequest(tokenEndpoint string) *http.Re
 	reqBody.Set("code", c.AuthCode)
 	reqBody.Set("redirect_uri", c.OIDCRedirectURI)
 	reqBody.Set("client_id", c.ClientID)
+	reqBody.Set("client_secret", c.ClientSecret)
 	reqBody.Set("code_verifier", c.CodeVerifier)
 
 	req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody.Encode()))
@@ -413,15 +416,20 @@ func (c *oauthClient) getUserEmailFromIDP(accessToken, userInfoEndpoint string) 
 	}
 	defer resp.Body.Close()
 
-	respData := map[string]interface{}{}
+	respData := map[string]any{}
 	body, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(body, &respData); err != nil {
 		return "", fmt.Errorf("unable to unmarshal user info response: %s", err.Error())
 	}
 
-	email, ok := respData["preferred_username"]
+	preferredUsername, ok := respData["preferred_username"]
 	if !ok {
-		return "", errors.New("no email found in user info response")
+		email, ok := respData["email"]
+		if !ok {
+			return "", errors.New("no username found in user info response")
+		}
+		return email.(string), nil
 	}
-	return email.(string), nil
+
+	return preferredUsername.(string), nil
 }
