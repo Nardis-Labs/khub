@@ -10,10 +10,7 @@ COPY . .
 
 COPY client/build /app/client/build/
 
-# Change to the client directory
-WORKDIR /app/client
-
-# Install the necessary dependencies and build the React app
+# Install the necessary dependencies
 RUN set -eux \
     & apk update && apk add \
         --no-cache \
@@ -30,6 +27,3 @@ RUN go mod download && \
 
 # Expose the port on which the Go binary will listen
 EXPOSE 8080
-
-# # Start the Go binary
-# CMD ["./khub", "start-app"]
