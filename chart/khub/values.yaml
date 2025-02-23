@@ -1,0 +1,81 @@
+# Global settings
+global:
+  imageRegistry: ghcr.io/nardis-labs
+  imagePullSecrets: []
+  storageClass: ""
+
+# Main khub application
+khub:
+  enabled: true
+  image:
+    repository: khub
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+# Data sink server
+dataSink:
+  enabled: true
+  image:
+    repository: khub
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+# MySQL topology sync cronjob
+mysqlTopologySync:
+  enabled: false
+  schedule: "*/30 * * * *"
+  image:
+    repository: khub-mysql-sync
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Redis configuration
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+  persistence:
+    enabled: true
+    size: 8Gi
+
+# PostgreSQL configuration
+postgresql:
+  enabled: false
+  auth:
+    username: khub
+    password: ""
+    database: khub
+  persistence:
+    enabled: true
+    size: 8Gi
