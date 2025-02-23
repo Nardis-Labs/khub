@@ -21,9 +21,7 @@ WORKDIR /app
 
 # Compile the Go binary with optimizations enabled
 
-ENV GO111MODULE=on
-RUN go mod download && \
-    CGO_ENABLED=0 GOOS=linux go build -ldflags='-extldflags "-static"' -a -o khub .
+COPY tmp/khub .
 
 # Expose the port on which the Go binary will listen
 EXPOSE 8080
