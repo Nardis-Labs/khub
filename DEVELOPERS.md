@@ -23,12 +23,16 @@ some real services to be running.
 
 
 ## Setting up an Oauth provider:
-For local development, use of any oauth2 provider will work. (Zitadel, Okta, AzureEntraID etc)
-- You will need an oauth provider in order to run this application as it relies on oauth to handle authentication 
+For local development, use of any oauth2 provider will work. (Zitadel, Google, Okta, AzureEntraID etc)
+- You will need an OAuth2.0 provider in order to run this application as it relies on OAuth2.0 to handle authentication 
   and to authorize users based on their ABAC designated permissions and groups. 
 
   You will need an OAuth2.0 client setup as a PKCE AuthCode flow client with a client ID. We recommend using a free tier provider like 
-  [Zitadel](https://zitadel.com/) for local development. 
+  [Zitadel](https://zitadel.com/), or a free [Google OAuth2.0 client](https://support.google.com/cloud/answer/15549257?hl=en&visit_id=638758778507628031-9062928&rd=1) for local development. 
+
+  As of writing this, the Google Oauth2.0 client setup does not support PKCE and therefore the client secret must be set in the KHub config. If
+  your IDP supports PKCE, all that is required is the client ID and base authority endpoint.
+
 
 ## Dev workflow
 
