@@ -35,18 +35,18 @@ timeout: "3000"
 
 func (suite *ConfigSuite) TestEnvConfig() {
 	cfgFile := "./not-found.yaml"
-	os.Setenv("khub_LISTEN_PORT", "8080")
-	os.Setenv("khub_TIMEOUT", "2000")
-	os.Setenv("khub_ENVIRONMENT", "Production")
-	os.Setenv("khub_OIDC_ISSUER", "test")
+	os.Setenv("KHUB_LISTEN_PORT", "8080")
+	os.Setenv("KHUB_TIMEOUT", "2000")
+	os.Setenv("KHUB_ENVIRONMENT", "Production")
+	os.Setenv("KHUB_OIDC_ISSUER", "test")
 	c := Load("1.2.3", cfgFile)
 	suite.Equal(8080, c.ListenPort)
 	suite.Equal(2000, c.Timeout)
 	suite.Equal("test", c.OIDCIssuer)
 	suite.Equal("Production", c.Environment)
-	os.Unsetenv("khub_LISTEN_PORT")
-	os.Unsetenv("khub_TIMEOUT")
-	os.Unsetenv("khub_ENVIRONMENT")
+	os.Unsetenv("KHUB_LISTEN_PORT")
+	os.Unsetenv("KHUB_TIMEOUT")
+	os.Unsetenv("KHUB_ENVIRONMENT")
 }
 
 func (suite *ConfigSuite) TestIsProduction() {
@@ -62,14 +62,14 @@ func (suite *ConfigSuite) TestIsProduction() {
 	}
 
 	for _, c := range cases {
-		os.Unsetenv("khub_ENVIRONMENT")
+		os.Unsetenv("KHUB_ENVIRONMENT")
 		if c.Environment != "" {
-			os.Setenv("khub_ENVIRONMENT", c.Environment)
+			os.Setenv("KHUB_ENVIRONMENT", c.Environment)
 		}
 		cfg := Load("test", "not-found")
 		suite.Equal(c.Expected, cfg.IsProduction(), "IsProduction should be %t", c.Expected)
 	}
-	os.Unsetenv("khub_ENVIRONMENT")
+	os.Unsetenv("KHUB_ENVIRONMENT")
 }
 
 func (suite *ConfigSuite) TestConfigFile() {
