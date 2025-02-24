@@ -53,7 +53,7 @@ spec:
             - name: KHUB_REDIS_ADDRESS
               value: {{ .Values.khub_data_sink.redis.address }}
             - name: KHUB_DB_AUTO_MIGRATE
-              value: "true"
+              value: "false"
             - name: KHUB_DB_HOST
               value: {{ .Values.database.host }}
             - name: KHUB_DB_NAME

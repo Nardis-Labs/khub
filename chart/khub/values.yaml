@@ -1,8 +1,6 @@
 # values.yaml
 
-environment: staging
-awsRegion: us-gov-west-1
-khubSecretVersion: 20241004-194300
+environment: production
 
 serviceAccountName:
   create: false
@@ -13,6 +11,10 @@ image:
 
 ingress:
 
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
 
 oidc:
   # clientId: ""
@@ -29,6 +31,7 @@ khub_app:
   redis:
     address: "" # writer-endoint
   enableGlobalReadOnly: "true"
+  dbAutoMigrate: "true"
   
 khub_data_sink:
   replicaCount: 1
