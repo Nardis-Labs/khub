@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: khub
+rules:
+- apiGroups: ["*"]
+  resources: [
+    "pods", 
+    "services", 
+    "deployments", 
+    "daemonsets", 
+    "endpoints", 
+    "statefulsets",
+    "persistentvolumeclaims", 
+    "events", 
+    "configmaps", 
+    "ingresses",
+    "cronjobs",
+    "replicasets",
+    "jobs",
+    "events",
+    "nodes"
+  ]
+  verbs: ["get", "list", "update", "patch"]
