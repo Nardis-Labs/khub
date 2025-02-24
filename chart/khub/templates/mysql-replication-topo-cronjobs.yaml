@@ -18,7 +18,7 @@ spec:
             app: khub-mysql-repl-topology
             app.kubernetes.io/name: khub
         spec:
-          serviceAccountName: {{ .Values.serviceAccountName | default "khub" }}
+          serviceAccountName: {{ include "serviceAccount.serviceAccountName" . }}
           restartPolicy: Never
           volumes:
           {{- with .Values.volumes }}

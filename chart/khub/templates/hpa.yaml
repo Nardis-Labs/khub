@@ -1,32 +1,30 @@
+
 {{- if .Values.autoscaling.enabled }}
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2beta2
+kind: {{ .Values.kind | default "HorizontalPodAutoscaler" }}
 metadata:
-  name: {{ include "khub.fullname" . }}
+  name: khub-app
   labels:
-    {{- include "khub.labels" . | nindent 4 }}
+    app: khub-app
+    app.kubernetes.io/name: khub
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "khub.fullname" . }}
+    name: khub-app
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
 {{- end }}

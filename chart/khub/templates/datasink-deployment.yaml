@@ -21,7 +21,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccountName | default "khub" }}
+      serviceAccountName: {{ include "serviceAccount.serviceAccountName" . }}
       volumes:
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}

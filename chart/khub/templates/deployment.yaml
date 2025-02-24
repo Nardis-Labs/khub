@@ -4,7 +4,7 @@ metadata:
   name: khub-app
   labels:
     app: khub-app
-    app.kubernetes.io/name: h8ds
+    app.kubernetes.io/name: khub
 spec:
   replicas: {{ .Values.khub_app.replicaCount }}
   revisionHistoryLimit: 2
@@ -15,23 +15,23 @@ spec:
     metadata:
       labels:
         app: khub-app
-        app.kubernetes.io/name: h8ds
+        app.kubernetes.io/name: khub
       annotations:
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
     spec:
-      serviceAccountName: {{ .Values.serviceAccountName | default "h8ds" }}
+      serviceAccountName: {{ include "serviceAccount.serviceAccountName" . }}
       volumes:
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: h8ds
+        - name: khub
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/app/h8ds", "start-app"]
+          command: ["/app/khub", "start-app"]
           volumeMounts:
             {{- with .Values.volumeMounts }}
               {{- toYaml . | nindent 12 }}

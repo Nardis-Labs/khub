@@ -1,81 +1,59 @@
-# Global settings
-global:
-  imageRegistry: ghcr.io/nardis-labs
-  imagePullSecrets: []
-  storageClass: ""
+# values.yaml
 
-# Main khub application
-khub:
-  enabled: true
-  image:
-    repository: khub
-    tag: 0.0.2-rc
-    pullPolicy: IfNotPresent
+environment: staging
+awsRegion: us-gov-west-1
+khubSecretVersion: 20241004-194300
+
+serviceAccountName:
+  create: false
+
+image:
+  repository: ghcr.io/nardis-labs
+  tag: "0.0.2-rc"
+
+ingress:
+
+
+oidc:
+  # clientId: ""
+  # audience: ""
+  # issuerUrl: ""
+
+database:
+  host: ""
+  name: khub
+  username: khub
+
+khub_app:
+  replicaCount: 2
+  redis:
+    address: "" # writer-endoint
+  enableGlobalReadOnly: "true"
+  
+khub_data_sink:
   replicaCount: 1
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 200m
-      memory: 256Mi
-  service:
-    type: ClusterIP
-    port: 8080
+  intervalSeconds: 5
+  redis:
+    address: "" # writer-endoint
 
-# Data sink server
-dataSink:
-  enabled: true
-  image:
-    repository: khub
-    tag: 0.0.2-rc
-    pullPolicy: IfNotPresent
-  replicaCount: 1
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 200m
-      memory: 256Mi
-  service:
-    type: ClusterIP
-    port: 8080
+mysql_replication_cron_enabled: false
 
-# MySQL topology sync cronjob
-mysqlTopologySync:
+podAnnotations:
+
+# This would expect two secrets exist in the same namespace as the khub deployment
+# with the following names: khub-db-password, and khub-oidc-client-secret each with a password field containinng the 
+# secret's value
+secretsManager:
+  - secret_name: khub_secrets
+    keys:
+      - KHUB_DB_PASSWORD
+      - KHUB_OIDC_CLIENT_SECRET
+
+autoscaling:
   enabled: false
-  schedule: "*/30 * * * *"
-  image:
-    repository: khub
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
 
-# Redis configuration
-redis:
-  enabled: false
-  architecture: standalone
-  auth:
-    enabled: true
-    password: ""
-  persistence:
-    enabled: true
-    size: 8Gi
+# Use standard volume syntax here. This would likely be needed to mount a CSI volume, such as the secrets store CSI driver
+volumes:
 
-# PostgreSQL configuration
-postgresql:
-  enabled: false
-  auth:
-    username: khub
-    password: ""
-    database: khub
-  persistence:
-    enabled: true
-    size: 8Gi
+# Use standard volumeMounts syntax here. This would likely be needed to mount a CSI volume, such as the secrets store CSI driver
+volumeMounts:

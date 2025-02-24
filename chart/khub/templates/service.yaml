@@ -5,7 +5,7 @@ metadata:
   name: khub-app
   labels:
     app: khub-app
-    app.kubernetes.io/name: h8ds
+    app.kubernetes.io/name: khub
 spec:
   type: NodePort
   externalTrafficPolicy: Cluster
