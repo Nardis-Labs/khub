@@ -1,47 +1,43 @@
-apiVersion: apps/v1
-kind: Deployment
+{{- if .Values.mysql_replication_cron_enabled }}
+apiVersion: batch/v1
+kind: CronJob
 metadata:
-  name: khub-data-sink
+  name: khub-mysql-repl-topology
   labels:
-    app: khub-data-sink
+    app: khub-mysql-repl-topology
     app.kubernetes.io/name: khub
 spec:
-  replicas: {{ .Values.khub_data_sink.replicaCount }}
-  revisionHistoryLimit: 2
-  selector:
-    matchLabels:
-      app: khub-data-sink
-  template:
-    metadata:
-      labels:
-        app: khub-data-sink
-        app.kubernetes.io/name: khub
-      annotations:
-      {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  schedule: "0 * * * *"
+  jobTemplate:
     spec:
-      serviceAccountName: {{ .Values.serviceAccountName | default "khub" }}
-      volumes:
-      {{- with .Values.volumes }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      containers:
-        - name: khub
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/app/khub", "start-datasink"]
-          volumeMounts:
+      template:
+        metadata:
+          labels:
+            app: khub-mysql-repl-topology
+            app.kubernetes.io/name: khub
+        spec:
+          serviceAccountName: {{ .Values.serviceAccountName | default "khub" }}
+          restartPolicy: Never
+          volumes:
+          {{- with .Values.volumes }}
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          containers:
+          - name: khub
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command: ["/app/khub", "capture-replication-topology"]
+            volumeMounts:
             {{- with .Values.volumeMounts }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
-          env:
+            env:
             - name: KHUB_ENVIRONMENT
               value: {{ .Values.environment }}
             - name: KHUB_BASE_URL
               value: "https://{{ .Values.ingress.host }}"
-            - name: KHUB_AUTH_IDP
-              value: {{ .Values.oidc.authIdp }}
             - name: KHUB_OIDC_AUDIENCE
               value: {{ .Values.oidc.audience }}
             - name: KHUB_OIDC_CLIENT_ID
@@ -75,3 +71,4 @@ spec:
                   key: password
             {{- end }}
             {{- end }}
+{{- end }}

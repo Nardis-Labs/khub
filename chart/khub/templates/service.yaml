@@ -1,15 +1,19 @@
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "khub.fullname" . }}
+  name: khub-app
   labels:
-    {{- include "khub.labels" . | nindent 4 }}
+    app: khub-app
+    app.kubernetes.io/name: h8ds
 spec:
-  type: {{ .Values.service.type }}
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
       name: http
   selector:
-    {{- include "khub.selectorLabels" . | nindent 4 }}
+    app: khub-app
