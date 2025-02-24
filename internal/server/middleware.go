@@ -118,7 +118,7 @@ func UserIdentity(cid, issuer string, skipper func(c echo.Context) bool) echo.Mi
 // getIDTokenWithNonce extracts a id_token token from the request's session along with the nonce value
 func getIDTokenWithNonce(sess *sessions.Session) (string, string, error) {
 	if sess.Values["id_token"] == nil || sess.Values["id_token"] == "" {
-		return "", "", errors.New("no id token found in session")
+		return "", "", errors.New("no ID token found in session")
 	}
 
 	if sess.Values["nonce"] == nil || sess.Values["nonce"] == "" {
