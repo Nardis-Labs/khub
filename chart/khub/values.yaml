@@ -1,0 +1,62 @@
+# values.yaml
+
+environment: production
+
+serviceAccountName:
+  create: false
+
+image:
+  repository: ghcr.io/nardis-labs
+  tag: "0.0.2-rc"
+
+ingress:
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+oidc:
+  # clientId: ""
+  # audience: ""
+  # issuerUrl: ""
+
+database:
+  host: ""
+  name: khub
+  username: khub
+
+khub_app:
+  replicaCount: 2
+  redis:
+    address: "" # writer-endoint
+  enableGlobalReadOnly: "true"
+  dbAutoMigrate: "true"
+  
+khub_data_sink:
+  replicaCount: 1
+  intervalSeconds: 5
+  redis:
+    address: "" # writer-endoint
+
+mysql_replication_cron_enabled: false
+
+podAnnotations:
+
+# This would expect two secrets exist in the same namespace as the khub deployment
+# with the following names: khub-db-password, and khub-oidc-client-secret each with a password field containinng the 
+# secret's value
+secretsManager:
+  - secret_name: khub_secrets
+    keys:
+      - KHUB_DB_PASSWORD
+      - KHUB_OIDC_CLIENT_SECRET
+
+autoscaling:
+  enabled: false
+
+# Use standard volume syntax here. This would likely be needed to mount a CSI volume, such as the secrets store CSI driver
+volumes:
+
+# Use standard volumeMounts syntax here. This would likely be needed to mount a CSI volume, such as the secrets store CSI driver
+volumeMounts:

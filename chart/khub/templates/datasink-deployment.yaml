@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: khub-data-sink
+  labels:
+    app: khub-data-sink
+    app.kubernetes.io/name: khub
+spec:
+  replicas: {{ .Values.khub_data_sink.replicaCount }}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: khub-data-sink
+  template:
+    metadata:
+      labels:
+        app: khub-data-sink
+        app.kubernetes.io/name: khub
+      annotations:
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "serviceAccount.serviceAccountName" . }}
+      volumes:
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: khub
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/app/khub", "start-datasink"]
+          volumeMounts:
+            {{- with .Values.volumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            - name: KHUB_ENVIRONMENT
+              value: {{ .Values.environment }}
+            - name: KHUB_BASE_URL
+              value: "https://{{ .Values.ingress.host }}"
+            - name: KHUB_AUTH_IDP
+              value: {{ .Values.oidc.authIdp }}
+            - name: KHUB_OIDC_AUDIENCE
+              value: {{ .Values.oidc.audience }}
+            - name: KHUB_OIDC_CLIENT_ID
+              value: {{ .Values.oidc.clientId }}
+            - name: KHUB_OIDC_ISSUER
+              value: {{ .Values.oidc.issuerUrl }}
+            - name: KHUB_OIDC_REDIRECT_URI
+              value: "https://{{ .Values.ingress.host }}/authorization-code/callback"
+            - name: KHUB_REDIS_ADDRESS
+              value: {{ .Values.khub_data_sink.redis.address }}
+            - name: KHUB_DB_AUTO_MIGRATE
+              value: "false"
+            - name: KHUB_DB_HOST
+              value: {{ .Values.database.host }}
+            - name: KHUB_DB_NAME
+              value: {{ .Values.database.name }}
+            - name: KHUB_DB_USERNAME
+              value: {{ .Values.database.username }}
+            - name: KHUB_K8S_DATA_SINK_INTERVAL_SECONDS
+              value: "{{ .Values.khub_data_sink.intervalSeconds }}"
+            - name: KHUB_REDIS_TLS_ENABLED
+              value: "{{ .Values.redis_tls_enabled }}"
+            - name: KHUB_REDIS_TLS_HOSTNAME
+              value: "{{ .Values.redis_tls_hostname }}"
+            {{- range $secret := .Values.secretsManager }}
+            {{- range $key := $secret.keys }}
+            - name: {{ (splitList "/" $key) | last }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ lower $key | replace "/" "-" | replace "_" "-" | replace "." "-"  }}
+                  key: password
+            {{- end }}
+            {{- end }}
