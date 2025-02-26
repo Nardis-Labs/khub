@@ -4,10 +4,10 @@
   "private": true,
   "dependencies": {
     "@carbon/icons-react": "^11.36.0",
-    "@carbon/react": "1.51.0",
+    "@carbon/react": "1.77.0",
     "@codemirror/lang-json": "^6.0.1",
-    "@codemirror/lang-yaml": "^6.0.0",
-    "@reduxjs/toolkit": "^2.5.1",
+    "@codemirror/lang-yaml": "^6.1.2",
+    "@reduxjs/toolkit": "^2.6.0",
     "@types/carbon-components-react": "^7.55.10",
     "@types/dagre": "^0.7.52",
     "@types/js-cookie": "^3.0.6",
