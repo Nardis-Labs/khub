@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ResourceDataTable } from "../../components/ResourceDataTable/ResourceDataTable";
 import { Identification, Events, GroupSecurity, Misuse, CheckmarkFilled, Edit, Close } from "@carbon/icons-react";
@@ -144,8 +143,7 @@ export const AccessControl = () => {
                       users: group.users.map((user: any) => {return <Tag key={user.name} type="green">{user.name}</Tag>;}),
                       actions: <ButtonSet style={{maxWidth: '50px'}}>
                             <Button 
-                              renderIcon={Edit} 
-                              label='edit' 
+                              renderIcon={Edit}
                               kind="ghost" 
                               size="sm"
                               onClick={() => {
@@ -155,14 +153,17 @@ export const AccessControl = () => {
                                 setSelectedUsers(group.users); 
                                 setGroupsModalOpen(true);
                               }}
-                            /> 
+                            >
+                              Edit
+                            </Button> 
                             <Button 
                               disabled
-                              renderIcon={Close} 
-                              label='delete' 
+                              renderIcon={Close}
                               kind="ghost" 
                               size="sm"
-                            /> 
+                            >
+                              Delete
+                            </Button>
                         </ButtonSet>
                     };
                   })
@@ -192,7 +193,6 @@ export const AccessControl = () => {
                       actions: <ButtonSet style={{maxWidth: '50px'}}>
                             <Button 
                               renderIcon={Edit} 
-                              label='edit' 
                               kind="ghost" 
                               size="sm"
                               onClick={() => {
@@ -202,14 +202,17 @@ export const AccessControl = () => {
                                 setPermissionAttribute(perm.appTag.includes('_write') ? 'write' : 'read');
                                 setPermissionsModalOpen(true);
                               }}
-                            /> 
+                            >
+                              Edit
+                            </Button> 
                             <Button 
                               disabled
                               renderIcon={Close} 
-                              label='delete' 
                               kind="ghost" 
                               size="sm"
-                            /> 
+                            >
+                              Delete
+                            </Button>
                         </ButtonSet>
                     };
                   })

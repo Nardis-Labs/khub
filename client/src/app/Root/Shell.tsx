@@ -85,46 +85,47 @@ export const Shell = ({userPreferredTheme, userInfo}: any) => {
           </HeaderName>
           <SideNav aria-label="Side navigation" expanded={isSideNavExpanded} onSideNavBlur={onClickSideNavExpand} href="#main-content">
               <SideNavItems>
-                <SideNavLink as={NavLink} to="/" exact renderIcon={LogoKubernetes}>Cluster Overview</SideNavLink>
+                <SideNavLink as={NavLink} to="/" end renderIcon={LogoKubernetes}>Cluster Overview</SideNavLink>
                 <SideNavMenu defaultExpanded renderIcon={KubernetesPod} title="Resources">
-                  <SideNavLink as={NavLink} to="/pods" exact >Pods</SideNavLink>
-                  <SideNavLink as={NavLink} to="/deployments" exact>Deployments</SideNavLink>
-                  <SideNavLink as={NavLink} to="/Daemonsets" exact>Daemonsets</SideNavLink>
-                  <SideNavLink as={NavLink} to="/statefulsets" exact>Statefulsets</SideNavLink>
-                  <SideNavLink as={NavLink} to="/jobs" exact>Jobs</SideNavLink>
-                  <SideNavLink as={NavLink} to="/cronjobs" exact>CronJobs</SideNavLink>
+                  <SideNavLink as={NavLink} to="/pods" end>Pods</SideNavLink>
+                  <SideNavLink as={NavLink} to="/deployments" end>Deployments</SideNavLink>
+                  <SideNavLink as={NavLink} to="/Daemonsets" end>Daemonsets</SideNavLink>
+                  <SideNavLink as={NavLink} to="/statefulsets" end>Statefulsets</SideNavLink>
+                  <SideNavLink as={NavLink} to="/jobs" end>Jobs</SideNavLink>
+                  <SideNavLink as={NavLink} to="/cronjobs" end>CronJobs</SideNavLink>
                 </SideNavMenu>
                 <SideNavMenu defaultExpanded renderIcon={KubernetesIpAddress} title="Network">
-                  <SideNavLink as={NavLink} to="/services" exact>Services</SideNavLink>
-                  <SideNavLink as={NavLink} to="/ingresses" exact>Ingresses</SideNavLink>
+                  <SideNavLink as={NavLink} to="/services" end>Services</SideNavLink>
+                  <SideNavLink as={NavLink} to="/ingresses" end>Ingresses</SideNavLink>
                 </SideNavMenu>
                 <SideNavMenu defaultExpanded renderIcon={DocumentMultiple_01} title="Configuration">
-                  <SideNavLink as={NavLink} to="/configmaps" exact>ConfigMaps</SideNavLink>
+                  <SideNavLink as={NavLink} to="/configmaps" end>ConfigMaps</SideNavLink>
                 </SideNavMenu>
-                <SideNavLink as={NavLink} to="/nodes" exact renderIcon={BareMetalServer} >Nodes</SideNavLink>
+                <SideNavLink as={NavLink} to="/nodes" end renderIcon={BareMetalServer} >Nodes</SideNavLink>
                 <SideNavMenu defaultExpanded renderIcon={TreeView} title="Data & Infrastructure">
-                  <SideNavLink as={NavLink} to="/mysql-replication-topology" exact>
+                  <SideNavLink as={NavLink} to="/mysql-replication-topology" end>
                     MySQL Replication
                   </SideNavLink>
                 </SideNavMenu>
-                <SideNavLink as={NavLink} to="/reports" exact renderIcon={DocumentEpdf} >Reports</SideNavLink>
+                <SideNavLink as={NavLink} to="/reports" end renderIcon={DocumentEpdf} >Reports</SideNavLink>
                 {userIsAdmin.isAdmin && <SideNavMenu defaultExpanded renderIcon={RuleLocked} title="Administration">
-                  <SideNavLink as={NavLink} to="/general-settings" >General</SideNavLink>
-                  <SideNavLink as={NavLink} to="/access-control" >Access Control</SideNavLink>
+                  <SideNavLink as={NavLink} to="/general-settings" end>General</SideNavLink>
+                  <SideNavLink as={NavLink} to="/access-control" end>Access Control</SideNavLink>
                 </SideNavMenu>}
                 
               </SideNavItems>
             </SideNav>
           <HeaderGlobalBar>
             <Popover open={showNotifs || notificationsState.notifications.length > 0} autoAlign> 
-              <HeaderGlobalAction style={{marginTop: '2px'}} aria-label="Notifications" tooltipAlignment="center" onClick={() => handleOpenNotifs()}>
+              <HeaderGlobalAction aria-label="Notifications" tooltipAlignment="center" onClick={() => handleOpenNotifs()}>
+                <div style={{marginTop: '2px'}}>
                   <div>
                     {notificationsState.notifications.length > 0 &&
                     <div className='notif-tag'></div>
                     }
                     <WarningDiamond size={18} />
                   </div>
-                  
+                </div>
               </HeaderGlobalAction>
               <PopoverContent className="p-3">
                       {notificationsState.notifications.map((notif: any) => {
@@ -132,7 +133,7 @@ export const Shell = ({userPreferredTheme, userInfo}: any) => {
                       })}
               </PopoverContent>
             </Popover>
-            <HeaderGlobalAction aria-label="Theme Selector" tooltipAlignment="none">
+            <HeaderGlobalAction aria-label="Theme Selector" tooltipAlignment={undefined}>
               <TableToolbarMenu iconDescription='theme selector' renderIcon={() => {return <ColorPalette/>;}}>
                   <TableToolbarAction onClick={() => setAppTheme('light')} className='color-theme-toolbar-actions'>
                   {appTheme.theme === 'light' && 
@@ -166,7 +167,7 @@ export const Shell = ({userPreferredTheme, userInfo}: any) => {
                   </TableToolbarAction>
               </TableToolbarMenu>
             </HeaderGlobalAction>
-            <HeaderGlobalAction aria-label={userInfo.name} tooltipAlignment="none" >
+            <HeaderGlobalAction aria-label={userInfo.name} tooltipAlignment={undefined} >
               <TableToolbarMenu iconDescription='user info' renderIcon={() => {return <UserAvatar/>;}}>
                   <TableToolbarAction onClick={() => logoutRedirect()} className='color-theme-toolbar-actions'>
                       Refresh Session

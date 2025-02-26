@@ -17,20 +17,9 @@ export type RootProps = {
 
 export function Root() {
   const dispatch = useAppDispatch();
-  const {data: userInfo, isFetching: userInfoFetching, isLoading: userIsLoading} = useUserInfoQuery({});
+  const {data: userInfo} = useUserInfoQuery({});
   const userPreferredTheme = userInfo?.darkMode ? 'dark' : 'light';
   
-  if (!userInfoFetching || !userIsLoading) {
-    if (userInfo !== undefined && (!userInfo.isAdmin && (userInfo.groups === null || userInfo.groups.length === 0))) {
-      dispatch(updateNotifications({notifications: [
-          {
-            status: 'error', 
-            notif: `You appear to have no explicit permissions in this application. 
-This may result in a degraded experience. Please contact administrators in slack for access.`
-          }
-      ]}));
-    }
-  }
 
   useEffect(() => {
     if (userInfo !== undefined && (userInfo.isAdmin || 
