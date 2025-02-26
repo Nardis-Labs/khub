@@ -25,7 +25,12 @@ module.exports = {
     '@typescript-eslint/no-namespace': OFF,
     '@typescript-eslint/explicit-module-boundary-types': OFF,
     'react/display-name': OFF,
-    'react/prop-types': OFF
+    'react/prop-types': OFF,
+    "@typescript-eslint/no-unused-expressions": ["error", {
+          "allowShortCircuit": false,
+          "allowTernary": false,
+          "allowTaggedTemplates": false
+        }]
   },
   settings: {
     react: {
